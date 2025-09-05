@@ -16,8 +16,11 @@ import StudentDashboard from './screens/StudentDashboard';
 import RequirementsScreen from './screens/RequirementsScreen';
 import StudentProfile from './screens/StudentProfile';
 import BottomNavigation from './components/BottomNavigation';
+import AdminPanel from './screens/AdminPanel';
 import styles from './styles';
 import WelcomeScreen from './screens/WelcomeScreen'; // Added import for WelcomeScreen
+import LoginScreen from './screens/LoginScreen';
+import DepartmentDashboard from './screens/DepartmentDashboard';
 
 export default function App() {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'admin-login'
@@ -85,18 +88,24 @@ export default function App() {
     setEditingId(null);
   }
 
-  async function handleAuth() {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Validation', 'Email and password are required');
+  async function handleAuth(emailOrStudentId, password, mode = 'normal') {
+    if (!emailOrStudentId.trim() || !password.trim()) {
+      Alert.alert('Validation', 'Email/Student ID and password are required');
       return;
     }
     
     try {
       setSubmitting(true);
+      
+      // Set auth mode based on the mode parameter
+      if (mode === 'admin') {
+        setAuthMode('admin-login');
+      }
+      
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: emailOrStudentId.trim(), password }),
       });
       
       const data = await res.json();
@@ -147,7 +156,7 @@ export default function App() {
         student_id: studentId.trim(),
         year_level: yearLevel.trim(),
         role: registrationMode,
-        department_id: registrationMode === 'department' ? departmentId.trim() : null
+        department_id: registrationMode === 'department' ? Number(departmentId) : null
       };
       
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -281,28 +290,22 @@ export default function App() {
   }
 
   if (!user) {
+    if (authMode === 'admin-login') {
+      // Show admin login form
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>eClearance</Text>
+          <Text style={styles.title}>eClearance - Admin Login</Text>
         <View style={styles.authContainer}>
-          <View style={styles.authToggle}>
             <TouchableOpacity 
-              style={[styles.toggleBtn, authMode === 'login' && styles.toggleBtnActive]}
+              style={[styles.toggleBtn, styles.toggleBtnActive]}
               onPress={() => setAuthMode('login')}
             >
-              <Text style={[styles.toggleText, authMode === 'login' && styles.toggleTextActive]}>Student/Dept Login</Text>
+              <Text style={[styles.toggleText, styles.toggleTextActive]}>← Back to Student/Dept Login</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.toggleBtn, authMode === 'admin-login' && styles.toggleBtnActive]}
-              onPress={() => setAuthMode('admin-login')}
-            >
-              <Text style={[styles.toggleText, authMode === 'admin-login' && styles.toggleTextActive]}>Admin Login</Text>
-            </TouchableOpacity>
-          </View>
           
           <TextInput
             style={styles.input}
-            placeholder="Email"
+              placeholder="Admin Email"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -318,13 +321,23 @@ export default function App() {
           />
           
           <Button
-            title="Login"
-            onPress={handleAuth}
+              title="Admin Login"
+              onPress={() => handleAuth(email, password, 'admin')}
             disabled={submitting}
           />
         </View>
         <StatusBar style="auto" />
       </SafeAreaView>
+      );
+    }
+    
+    // Show the new LoginScreen for normal login
+    return (
+      <LoginScreen 
+        onLogin={handleAuth}
+        onAdminLogin={() => setAuthMode('admin-login')}
+        submitting={submitting}
+      />
     );
   }
 
@@ -353,168 +366,48 @@ export default function App() {
         default:
           return <StudentDashboard />;
       }
+    } else if (user.role === 'department') {
+      return <DepartmentDashboard user={user} onLogout={handleLogout} />;
     } else {
-      // Admin/Department view (existing code)
       return (
-        <>
-          {user.role === 'admin' && (
-            <View style={styles.adminSection}>
-              <Text style={styles.sectionTitle}>Admin Panel - User Registration</Text>
-              
-              <View style={styles.registrationToggle}>
-                <TouchableOpacity 
-                  style={[styles.regToggleBtn, registrationMode === 'student' && styles.regToggleBtnActive]}
-                  onPress={() => setRegistrationMode('student')}
-                >
-                  <Text style={[styles.regToggleText, registrationMode === 'student' && styles.regToggleTextActive]}>Register Student</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.regToggleBtn, registrationMode === 'department' && styles.regToggleBtnActive]}
-                  onPress={() => setRegistrationMode('department')}
-                >
-                  <Text style={[styles.regToggleText, registrationMode === 'department' && styles.regToggleTextActive]}>Register Department</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.formRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-                
-                {registrationMode === 'student' && (
-                  <>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Phone Number"
-                      value={phone}
-                      onChangeText={setPhone}
-                      keyboardType="phone-pad"
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Course/Program"
-                      value={course}
-                      onChangeText={setCourse}
-                      autoCapitalize="words"
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Student ID"
-                      value={studentId}
-                      onChangeText={setStudentId}
-                      autoCapitalize="characters"
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Year Level (e.g., 1st Year, 2nd Year)"
-                      value={yearLevel}
-                      onChangeText={setYearLevel}
-                      autoCapitalize="words"
-                    />
-                  </>
-                )}
-                
-                {registrationMode === 'department' && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Department ID"
-                    value={departmentId}
-                    onChangeText={setDepartmentId}
-                    keyboardType="numeric"
-                  />
-                )}
-                
-                <Button
-                  title={`Register ${registrationMode === 'student' ? 'Student' : 'Department Staff'}`}
-                  onPress={handleRegister}
-                  disabled={submitting}
-                />
-              </View>
-            </View>
-          )}
-          
-          <View style={styles.formRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <Button
-              title={editingId ? 'Update' : 'Add'}
-              onPress={handleSubmit}
-              disabled={submitting}
-            />
-            {editingId ? (
-              <View style={{ marginTop: 8 }}>
-                <Button title="Cancel" color="#888" onPress={resetForm} />
-              </View>
-            ) : null}
-          </View>
-
-          {loading ? (
-            <ActivityIndicator size="large" style={{ marginTop: 16 }} />
-          ) : (
-            <FlatList
-              data={users}
-              keyExtractor={(item) => String(item.id)}
-              contentContainerStyle={{ paddingVertical: 8 }}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }) => (
-                <View style={styles.listItem}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.userName}>{item.name}</Text>
-                    <Text style={styles.userEmail}>{item.email}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(item)}>
-                    <Text style={styles.btnText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                    <Text style={styles.btnText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              ListEmptyComponent={!loading ? (
-                <Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>No users</Text>
-              ) : null}
-            />
-          )}
-        </>
+        <AdminPanel
+          user={user}
+          styles={styles}
+          registrationMode={registrationMode}
+          setRegistrationMode={setRegistrationMode}
+          name={name}
+          setName={setName}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          phone={phone}
+          setPhone={setPhone}
+          course={course}
+          setCourse={setCourse}
+          studentId={studentId}
+          setStudentId={setStudentId}
+          yearLevel={yearLevel}
+          setYearLevel={setYearLevel}
+          departmentId={departmentId}
+          setDepartmentId={setDepartmentId}
+          submitting={submitting}
+          handleRegister={handleRegister}
+          editingId={editingId}
+          resetForm={resetForm}
+          handleSubmit={handleSubmit}
+          loading={loading}
+          users={users}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
       );
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {user.role !== 'student' && (
+      {user.role === 'admin' && (
         <View style={styles.header}>
           <Text style={styles.title}>eClearance</Text>
           <View style={styles.userInfo}>

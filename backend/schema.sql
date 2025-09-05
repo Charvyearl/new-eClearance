@@ -85,4 +85,8 @@ CREATE INDEX idx_clearance_items_request_id ON clearance_items(clearance_request
 CREATE INDEX idx_clearance_items_department_id ON clearance_items(department_id);
 CREATE INDEX idx_clearance_items_status ON clearance_items(status);
 
+-- Seed default admin user (email: admin@eclearance.com, password: admin123)
+INSERT IGNORE INTO users (name, email, password_hash, role)
+VALUES ('System Administrator', 'admin@eclearance.com', '$2b$10$bEynuq7Sb8VGLOrpNhvZCeOAY9O3GGUfL/t4Git5KrE40Z2vFEiXW', 'admin');
+
 
