@@ -21,6 +21,9 @@ import styles from './styles';
 import WelcomeScreen from './screens/WelcomeScreen'; // Added import for WelcomeScreen
 import LoginScreen from './screens/LoginScreen';
 import DepartmentDashboard from './screens/DepartmentDashboard';
+import RequirementsManagement from './screens/RequirementsManagement';
+import DepartmentRequests from './screens/DepartmentRequests';
+import DepartmentProfile from './screens/DepartmentProfile';
 
 export default function App() {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'admin-login'
@@ -41,6 +44,7 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [registrationMode, setRegistrationMode] = useState('student'); // 'student' or 'department'
   const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'requirements', 'profile'
+  const [departmentScreen, setDepartmentScreen] = useState('dashboard'); // 'dashboard', 'requirements', 'requests', 'profile'
   const [showWelcome, setShowWelcome] = useState(true); // Added state for welcome screen
   
 
@@ -367,7 +371,18 @@ export default function App() {
           return <StudentDashboard />;
       }
     } else if (user.role === 'department') {
-      return <DepartmentDashboard user={user} onLogout={handleLogout} />;
+      switch (departmentScreen) {
+        case 'dashboard':
+          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+        case 'requirements':
+          return <RequirementsManagement user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+        case 'requests':
+          return <DepartmentRequests user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+        case 'profile':
+          return <DepartmentProfile user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+        default:
+          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+      }
     } else {
       return (
         <AdminPanel
@@ -404,6 +419,15 @@ export default function App() {
       );
     }
   };
+
+  // For department users, don't use SafeAreaView to avoid white space
+  if (user.role === 'department') {
+    return (
+      <View style={{ flex: 1 }}>
+        {renderMainContent()}
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

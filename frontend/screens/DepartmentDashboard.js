@@ -4,12 +4,12 @@ import {
   Text, 
   TouchableOpacity, 
   StyleSheet, 
-  SafeAreaView, 
   ScrollView,
-  Image
+  Image,
+  StatusBar
 } from 'react-native';
 
-export default function DepartmentDashboard({ user, onLogout }) {
+export default function DepartmentDashboard({ user, onLogout, onNavigate }) {
   // Mock data - replace with real API calls
   const stats = {
     totalRequests: 45,
@@ -71,17 +71,16 @@ export default function DepartmentDashboard({ user, onLogout }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.topBar}>
-          <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
-        </View>
-        
-        <View style={styles.headerContent}>
-          <Text style={styles.dashboardTitle}>Department Dashboard</Text>
-          <Text style={styles.departmentName}>Computer Science Department</Text>
-        </View>
+      <View style={styles.topBar}>
+        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+      </View>
+      
+      <View style={styles.headerContent}>
+        <Text style={styles.dashboardTitle}>Department Dashboard</Text>
+        <Text style={styles.departmentName}>Computer Science Department</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -177,36 +176,45 @@ export default function DepartmentDashboard({ user, onLogout }) {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
+        <TouchableOpacity 
+          style={[styles.navItem, styles.navItemActive]} 
+          onPress={() => onNavigate && onNavigate('dashboard')}
+        >
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={[styles.navText, styles.navTextActive]}>Dashboard</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('requirements')}
+        >
           <Text style={styles.navIcon}>📄</Text>
           <Text style={styles.navText}>Requirements</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('requests')}
+        >
           <Text style={styles.navIcon}>👥</Text>
           <Text style={styles.navText}>Request</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('profile')}
+        >
           <Text style={styles.navIcon}>👤</Text>
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
     backgroundColor: '#1976d2',
   },
   topBar: {
@@ -223,22 +231,26 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   headerContent: {
+    backgroundColor: 'white',
     padding: 20,
+    paddingTop: 40,
     paddingBottom: 30,
+
   },
   dashboardTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'white',
+    color: '#666',
     marginBottom: 5,
   },
   departmentName: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#999',
   },
   content: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#f5f5f5',
   },
   summaryCards: {
     flexDirection: 'row',
