@@ -1,0 +1,52 @@
+﻿# Node
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build outputs
+build/
+dist/
+**/build/
+**/dist/
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+
+# Env files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+*.local
+*.cache
+
+# TypeScript
+*.tsbuildinfo
+
+# React
+web/.pnp.cjs
+web/.pnp.loader.mjs
+web/.parcel-cache/
+web/.next/
+web/out/
+
+# Backend
+backend/.cache/
+backend/tmp/
