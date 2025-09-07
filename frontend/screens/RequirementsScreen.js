@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 
-export default function RequirementsScreen() {
-  const [requirements, setRequirements] = useState([
-    { id: 'finance', title: 'Finance Clearance', description: 'Settle all financial obligations', office: 'Finance Office', dueDate: 'Jan 12, 2025', status: 'completed', documents: ['Payment Receipt'] },
-    { id: 'registrar', title: 'Registrar Documents', description: 'Submit final grades and academic requirements', office: 'Registrar', dueDate: 'Jan 15, 2025', status: 'pending', documents: ['Transcript of Records', 'Diploma Application'] },
-    { id: 'clinic', title: 'Clinic Clearance', description: 'Complete medical clearance requirements', office: 'Clinic', dueDate: 'Jan 25, 2025', status: 'not_started', documents: ['Medical Certificate', 'Health Insurance'] },
-  ]);
+export default function RequirementsScreen({ API_URL, token, user }) {
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [requirementsFilter, setRequirementsFilter] = useState('all');
+
+  async function loadRequirements() {
+    if (!token) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/requirements`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setRequirements(data);
+      } else {
+        setRequirements([]);
+      }
+    } catch (e) {
+      // Fallback to empty array on error
+      setRequirements([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadRequirements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   function getFilteredRequirements() {
     switch (requirementsFilter) {
@@ -61,41 +84,47 @@ export default function RequirementsScreen() {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ paddingBottom: 16 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>{item.title}</Text>
-              <View style={[styles.statusBadge, renderStatusBadgeStyle(item.status)]}>
-                <Text style={styles.statusBadgeText}>{renderStatusText(item.status)}</Text>
+              <View style={[styles.statusBadge, renderStatusBadgeStyle(item.status || 'not_started')]}>
+                <Text style={styles.statusBadgeText}>{renderStatusText(item.status || 'not_started')}</Text>
               </View>
             </View>
-            <Text style={styles.reqDescription}>{item.description}</Text>
-            <Text style={styles.reqSubtext}>{item.office} • Due: {item.dueDate}</Text>
+            <Text style={styles.reqDescription}>{item.description || 'No description'}</Text>
+            <Text style={styles.reqSubtext}>Due: {item.due_date || 'No due date'}</Text>
 
             <View style={styles.reqDocsRow}>
               <Text style={styles.reqDocsLabel}>Required Documents:</Text>
               <View style={styles.reqChipsRow}>
-                {item.documents.map((doc) => (
-                  <View key={doc} style={styles.reqChip}><Text style={styles.reqChipText}>{doc}</Text></View>
+                {(item.required_documents || []).map((doc, index) => (
+                  <View key={index} style={styles.reqChip}><Text style={styles.reqChipText}>{doc}</Text></View>
                 ))}
               </View>
             </View>
 
-            {item.status === 'not_started' && (
+            {(item.status || 'not_started') === 'not_started' && (
               <TouchableOpacity style={styles.primaryBtn} onPress={() => startProcess(item.id)}>
                 <Text style={styles.primaryBtnText}>Start Process</Text>
               </TouchableOpacity>
             )}
-            {item.status === 'pending' && (
+            {(item.status || 'not_started') === 'pending' && (
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => markCompleted(item.id)}>
                 <Text style={styles.secondaryBtnText}>Mark as Completed</Text>
               </TouchableOpacity>
             )}
           </View>
         )}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>No requirements</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>Loading requirements...</Text>
+          ) : (
+            <Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>No requirements</Text>
+          )
+        }
       />
     </View>
   );

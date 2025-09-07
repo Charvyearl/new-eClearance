@@ -24,12 +24,25 @@ async function listUsers() {
 }
 
 async function getUserById(id) {
-	const rows = await query('SELECT id, name, email, role, phone, course, student_id, year_level, created_at, updated_at FROM users WHERE id = ?', [id]);
+	const rows = await query('SELECT id, name, email, role, phone, course, student_id, department_id, year_level, created_at, updated_at FROM users WHERE id = ?', [id]);
 	return rows[0] || null;
 }
 
 async function getUserByEmail(email) {
-	const rows = await query('SELECT id, name, email, password_hash, role, phone, course, student_id, year_level, created_at, updated_at FROM users WHERE email = ?', [email]);
+	const rows = await query('SELECT id, name, email, password_hash, role, phone, course, student_id, department_id, year_level, created_at, updated_at FROM users WHERE email = ?', [email]);
+	return rows[0] || null;
+}
+
+async function getUserByStudentId(studentId) {
+	// Flexible match: exact, or case-insensitive and ignoring hyphens
+	const rows = await query(
+		`SELECT id, name, email, password_hash, role, phone, course, student_id, department_id, year_level, created_at, updated_at
+		 FROM users
+		 WHERE student_id = ?
+		    OR REPLACE(LOWER(student_id), '-', '') = REPLACE(LOWER(?), '-', '')
+		 LIMIT 1`,
+		[studentId, studentId]
+	);
 	return rows[0] || null;
 }
 
@@ -57,6 +70,7 @@ module.exports = {
 	listUsers,
 	getUserById,
 	getUserByEmail,
+	getUserByStudentId,
 	createUser,
 	updateUser,
 	updateStudentProfile,

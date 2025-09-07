@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,38 +6,133 @@ import {
   StyleSheet, 
   ScrollView,
   Image,
-  StatusBar
+  StatusBar,
+  Modal,
+  TextInput
 } from 'react-native';
+import { Platform } from 'react-native';
 
-export default function RequirementsManagement({ user, onLogout, onNavigate }) {
-  // Mock data - replace with real API calls
-  const requirements = [
-    {
-      id: 1,
-      title: 'Library Clearance',
-      description: 'Return all borrowed books and pay outstanding fees',
-      dueDate: '1/15/2025',
-      requiredDocuments: ['2D books borrowed'],
-      completed: 45,
-      pending: 22,
-      createdDate: '1/1/2025'
+export default function RequirementsManagement({ user, onLogout, onNavigate, API_URL, token }) {
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [reqTitle, setReqTitle] = useState('');
+  const [reqDescription, setReqDescription] = useState('');
+  const [reqDueDate, setReqDueDate] = useState('');
+  const [documents, setDocuments] = useState(['']);
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  async function loadRequirements() {
+    if (!token) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/requirements`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setRequirements(data);
+      } else {
+        setRequirements([]);
+      }
+    } catch (e) {
+      // no-op display for now
+    } finally {
+      setLoading(false);
     }
-  ];
+  }
 
   const handleAddRequirements = () => {
-    // Navigate to add requirements form
-    console.log('Add new requirements');
+    setIsAddOpen(true);
   };
 
   const handleEditRequirement = (requirementId) => {
-    // Navigate to edit requirement
-    console.log('Edit requirement:', requirementId);
+    const r = requirements.find((x) => x.id === requirementId);
+    if (!r) return;
+    setEditingId(requirementId);
+    setReqTitle(r.title || '');
+    setReqDescription(r.description || '');
+    setReqDueDate(r.due_date || '');
+    setDocuments(Array.isArray(r.required_documents) && r.required_documents.length ? r.required_documents : ['']);
+    setIsAddOpen(true);
   };
 
   const handleDeleteRequirement = (requirementId) => {
-    // Delete requirement
-    console.log('Delete requirement:', requirementId);
+    setConfirmDeleteId(requirementId);
   };
+
+  async function performDelete() {
+    if (!confirmDeleteId) return;
+    try {
+      const res = await fetch(`${API_URL}/requirements/${confirmDeleteId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      // Regardless of specific error text, just close and refresh on success
+      if (res.ok) {
+        await loadRequirements();
+      }
+    } catch {}
+    setConfirmDeleteId(null);
+  }
+
+  function resetAddForm() {
+    setReqTitle('');
+    setReqDescription('');
+    setReqDueDate('');
+    setDocuments(['']);
+  }
+
+  function handleAddDocumentField() {
+    setDocuments((prev) => [...prev, '']);
+  }
+
+  function handleChangeDocument(value, index) {
+    setDocuments((prev) => prev.map((d, i) => (i === index ? value : d)));
+  }
+
+  function handleRemoveDocumentField(index) {
+    setDocuments((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSaveRequirement() {
+    try {
+      const body = {
+        title: reqTitle,
+        description: reqDescription,
+        due_date: reqDueDate,
+        required_documents: documents.filter((d) => d.trim() !== ''),
+      };
+      const isEditing = Boolean(editingId);
+      const url = isEditing ? `${API_URL}/requirements/${editingId}` : `${API_URL}/requirements`;
+      const method = isEditing ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data && data.message ? data.message : 'Failed to create requirement');
+        return;
+      }
+      setIsAddOpen(false);
+      resetAddForm();
+      setEditingId(null);
+      await loadRequirements();
+    } catch (e) {
+      alert('Failed to create requirement');
+    }
+  }
+
+  useEffect(() => {
+    loadRequirements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   return (
     <View style={styles.container}>
@@ -61,61 +156,46 @@ export default function RequirementsManagement({ user, onLogout, onNavigate }) {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Requirements Cards */}
-        {requirements.map((requirement) => (
-          <View key={requirement.id} style={styles.requirementCard}>
-            {/* Card Header */}
-            <View style={styles.cardHeader}>
-              <Text style={styles.requirementTitle}>{requirement.title}</Text>
-              <View style={styles.cardActions}>
-                <TouchableOpacity 
-                  style={styles.actionButton} 
-                  onPress={() => handleEditRequirement(requirement.id)}
-                >
-                  <Text style={styles.actionIcon}>✏️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.actionButton} 
-                  onPress={() => handleDeleteRequirement(requirement.id)}
-                >
-                  <Text style={styles.actionIcon}>🗑️</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Card Content */}
-            <Text style={styles.requirementDescription}>{requirement.description}</Text>
-            
-            <View style={styles.dueDateContainer}>
-              <Text style={styles.dueDateIcon}>📅</Text>
-              <Text style={styles.dueDateText}>Due: {requirement.dueDate}</Text>
-            </View>
-
-            <Text style={styles.requiredDocsLabel}>Required Documents:</Text>
-            <View style={styles.documentTags}>
-              {requirement.requiredDocuments.map((doc, index) => (
-                <View key={index} style={styles.documentTag}>
-                  <Text style={styles.documentIcon}>📄</Text>
-                  <Text style={styles.documentText}>{doc}</Text>
+        {loading ? (
+          <Text style={{ textAlign: 'center', color: '#666' }}>Loading requirements...</Text>
+        ) : requirements.length === 0 ? (
+          <Text style={{ textAlign: 'center', color: '#666' }}>No requirements yet</Text>
+        ) : (
+          requirements.map((requirement) => (
+            <View key={requirement.id} style={styles.requirementCard}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.requirementTitle}>{requirement.title}</Text>
+                <View style={styles.cardActions}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleEditRequirement(requirement.id)}>
+                    <Text style={styles.actionIcon}>✏️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteRequirement(requirement.id)}>
+                    <Text style={styles.actionIcon}>🗑️</Text>
+                  </TouchableOpacity>
                 </View>
-              ))}
-            </View>
-
-            {/* Status Indicators */}
-            <View style={styles.statusContainer}>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusIcon}>✅</Text>
-                <Text style={styles.statusText}>{requirement.completed} Completed</Text>
               </View>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusIcon}>⏰</Text>
-                <Text style={styles.statusText}>{requirement.pending} pending</Text>
-              </View>
-            </View>
 
-            <Text style={styles.createdDate}>Created: {requirement.createdDate}</Text>
-          </View>
-        ))}
+              <Text style={styles.requirementDescription}>{requirement.description || 'No description'}</Text>
+
+              <View style={styles.dueDateContainer}>
+                <Text style={styles.dueDateIcon}>📅</Text>
+                <Text style={styles.dueDateText}>Due: {requirement.due_date || '—'}</Text>
+              </View>
+
+              <Text style={styles.requiredDocsLabel}>Required Documents:</Text>
+              <View style={styles.documentTags}>
+                {(requirement.required_documents || []).map((doc, index) => (
+                  <View key={index} style={styles.documentTag}>
+                    <Text style={styles.documentIcon}>📄</Text>
+                    <Text style={styles.documentText}>{doc}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.createdDate}>Created: {String(requirement.created_at).slice(0, 10)}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -152,6 +232,111 @@ export default function RequirementsManagement({ user, onLogout, onNavigate }) {
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal visible={Boolean(confirmDeleteId)} transparent animationType="fade" onRequestClose={() => setConfirmDeleteId(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.modalTitle}>Are you sure?</Text>
+            <Text style={{ color: '#555', marginBottom: 12 }}>This action cannot be undone.</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#e0e0e0' }]} onPress={() => setConfirmDeleteId(null)}>
+                <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#c62828', marginLeft: 8 }]} onPress={performDelete}>
+                <Text style={styles.modalBtnText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Requirement Modal */}
+      <Modal visible={isAddOpen} animationType="slide" transparent onRequestClose={() => setIsAddOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Add Requirement</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Requirement Title"
+              value={reqTitle}
+              onChangeText={setReqTitle}
+            />
+
+            <TextInput
+              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+              placeholder="Description"
+              multiline
+              value={reqDescription}
+              onChangeText={setReqDescription}
+            />
+
+            {Platform.OS === 'web' ? (
+              <View style={styles.webInputWrapper}>
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <Text style={styles.webLabel}>Due Date</Text>
+                {/* Using native input for web to get type=date */}
+                <input
+                  type="date"
+                  value={reqDueDate}
+                  onChange={(e) => setReqDueDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    borderRadius: 8,
+                    border: '1px solid #e0e0e0',
+                    backgroundColor: '#f7f7f7',
+                    marginTop: 6,
+                    marginBottom: 16,
+                    display: 'block',
+                  }}
+                />
+              </View>
+            ) : (
+              <TextInput
+                style={styles.input}
+                placeholder="Due Date (YYYY-MM-DD)"
+                value={reqDueDate}
+                onChangeText={setReqDueDate}
+              />
+            )}
+
+            <Text style={styles.requiredDocsLabel}>Required Documents</Text>
+            {documents.map((doc, idx) => (
+              <View key={idx} style={{ marginBottom: 10 }}>
+                <View style={styles.docRow}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder={`Required Document ${idx + 1}`}
+                    value={doc}
+                    onChangeText={(v) => handleChangeDocument(v, idx)}
+                  />
+                  {documents.length > 1 ? (
+                    <TouchableOpacity style={styles.removeDocBtn} onPress={() => handleRemoveDocumentField(idx)}>
+                      <Text style={styles.removeDocText}>×</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+                {/* File attachments removed as requested */}
+              </View>
+            ))}
+
+            <TouchableOpacity style={styles.secondaryBtn} onPress={handleAddDocumentField}>
+              <Text style={styles.secondaryBtnText}>Add Document</Text>
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#e0e0e0' }]} onPress={() => { setIsAddOpen(false); resetAddForm(); }}>
+                <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#1976d2', marginLeft: 8 }]} onPress={handleSaveRequirement}>
+                <Text style={styles.modalBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -348,5 +533,90 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#1976d2',
     fontWeight: '500',
+  },
+  webInputWrapper: {
+    marginTop: 4,
+    marginBottom: 8,
+    marginRight: 20,
+
+  },
+  webLabel: {
+    color: '#666',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  // Modal styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#333',
+  },
+  input: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  docRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  removeDocBtn: {
+    marginLeft: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fce4e4',
+  },
+  removeDocText: {
+    color: '#c62828',
+    fontSize: 18,
+  },
+  secondaryBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#90caf9',
+  },
+  secondaryBtnText: {
+    color: '#1976d2',
+    fontWeight: '500',
+  },
+  modalBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 6,
+  },
+  modalBtnText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  confirmCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    width: '90%',
+    alignSelf: 'center',
   },
 });

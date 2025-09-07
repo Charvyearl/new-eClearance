@@ -41,6 +41,7 @@ export default function App() {
   const [yearLevel, setYearLevel] = useState('');
   const [role, setRole] = useState('student');
   const [departmentId, setDepartmentId] = useState('');
+  const [departments, setDepartments] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [registrationMode, setRegistrationMode] = useState('student'); // 'student' or 'department'
   const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'requirements', 'profile'
@@ -77,6 +78,16 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadDepartments() {
+    try {
+      const res = await fetch(`${API_URL}/departments`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDepartments(data);
+      }
+    } catch {}
   }
 
   function resetForm() {
@@ -147,6 +158,12 @@ export default function App() {
         Alert.alert('Validation', 'All student fields are required');
         return;
       }
+    } else if (registrationMode === 'department') {
+      const parsedDeptId = Number(String(departmentId).trim());
+      if (!Number.isFinite(parsedDeptId) || parsedDeptId <= 0) {
+        Alert.alert('Validation', 'Please select a valid department');
+        return;
+      }
     }
     
     try {
@@ -155,12 +172,12 @@ export default function App() {
         name: name.trim(), 
         email: email.trim(), 
         password,
-        phone: phone.trim(),
-        course: course.trim(),
-        student_id: studentId.trim(),
-        year_level: yearLevel.trim(),
+        phone: registrationMode === 'student' ? phone.trim() : null,
+        course: registrationMode === 'student' ? course.trim() : null,
+        student_id: registrationMode === 'student' ? studentId.trim() : null,
+        year_level: registrationMode === 'student' ? yearLevel.trim() : null,
         role: registrationMode,
-        department_id: registrationMode === 'department' ? Number(departmentId) : null
+        department_id: registrationMode === 'department' ? Number(String(departmentId).trim()) : null
       };
       
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -283,6 +300,10 @@ export default function App() {
                 }
               } catch {}
             }
+            // If admin, load departments for registration UI
+            if (data.user.role === 'admin') {
+              loadDepartments();
+            }
           }
         } catch (e) {}
       })();
@@ -360,7 +381,7 @@ export default function App() {
         case 'dashboard':
           return <StudentDashboard />;
         case 'requirements':
-          return <RequirementsScreen />;
+          return <RequirementsScreen API_URL={API_URL} token={token} user={user} />;
         case 'profile':
           return (
             <View style={{ flex: 1, backgroundColor: '#e3f2fd' }}>
@@ -375,7 +396,7 @@ export default function App() {
         case 'dashboard':
           return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
         case 'requirements':
-          return <RequirementsManagement user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+          return <RequirementsManagement user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
         case 'requests':
           return <DepartmentRequests user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
         case 'profile':
@@ -406,6 +427,7 @@ export default function App() {
           setYearLevel={setYearLevel}
           departmentId={departmentId}
           setDepartmentId={setDepartmentId}
+          departments={departments}
           submitting={submitting}
           handleRegister={handleRegister}
           editingId={editingId}

@@ -23,8 +23,8 @@ export default function LoginScreen({ onLogin, onAdminLogin, submitting }) {
         Alert.alert('Validation', 'Student ID and password are required');
         return;
       }
-      // Convert student ID to email format for backend compatibility
-      onLogin(studentId.trim() + '@student.smc.edu', password);
+      // Send student ID directly - backend will check both email and student_id
+      onLogin(studentId.trim(), password);
     } else {
       if (!email.trim() || !password.trim()) {
         Alert.alert('Validation', 'Email and password are required');

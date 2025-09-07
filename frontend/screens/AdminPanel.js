@@ -24,6 +24,7 @@ export default function AdminPanel(props) {
     setYearLevel,
     departmentId,
     setDepartmentId,
+    departments,
     submitting,
     handleRegister,
     // User management state/handlers
@@ -115,13 +116,23 @@ export default function AdminPanel(props) {
             )}
 
             {registrationMode === 'department' && (
-              <TextInput
-                style={styles.input}
-                placeholder="Department ID"
-                value={departmentId}
-                onChangeText={setDepartmentId}
-                keyboardType="numeric"
-              />
+              <>
+                <Text style={{ marginVertical: 8, fontWeight: '600' }}>Select Department</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {(departments || []).map((d) => (
+                    <TouchableOpacity
+                      key={d.id}
+                      style={[
+                        { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, borderWidth: 1, borderColor: '#1976d2', margin: 4 },
+                        String(departmentId) === String(d.id) && { backgroundColor: '#1976d2' }
+                      ]}
+                      onPress={() => setDepartmentId(String(d.id))}
+                    >
+                      <Text style={[{ color: '#1976d2' }, String(departmentId) === String(d.id) && { color: 'white' }]}>{d.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
             )}
 
             <Button

@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getUserByEmail, createUser } = require('../repositories/usersRepository');
+const { getUserByEmail, getUserByStudentId, createUser } = require('../repositories/usersRepository');
 const { query } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -40,14 +40,15 @@ router.post('/register', authMiddleware, async (req, res) => {
 			}
 			department_id = null;
 		} else if (role === 'department') {
-			if (department_id === null) {
-				return res.status(400).json({ message: 'Department registration requires department_id' });
+			// Department staff may be created without an immediate department assignment.
+			// If department_id is provided, validate and coerce; otherwise keep it null.
+			if (department_id !== null) {
+				const parsedDeptId = Number(department_id);
+				if (!Number.isFinite(parsedDeptId) || parsedDeptId <= 0) {
+					return res.status(400).json({ message: 'department_id must be a positive number' });
+				}
+				department_id = parsedDeptId;
 			}
-			const parsedDeptId = Number(department_id);
-			if (!Number.isFinite(parsedDeptId) || parsedDeptId <= 0) {
-				return res.status(400).json({ message: 'department_id must be a positive number' });
-			}
-			department_id = parsedDeptId;
 			student_id = null;
 			course = null;
 			year_level = null;
@@ -64,15 +65,15 @@ router.post('/register', authMiddleware, async (req, res) => {
 		
 
 		// Validate department exists if role is department (when departments table/FK are present)
-		if (role === 'department') {
+		if (role === 'department' && department_id !== null) {
 			try {
 				const rows = await query('SELECT id FROM departments WHERE id = ?', [department_id]);
 				if (!rows || rows.length === 0) {
 					return res.status(400).json({ message: 'Department not found. Please use a valid department_id.' });
 				}
 			} catch (e) {
-				// If departments table does not exist yet, return a helpful error
-				return res.status(500).json({ message: 'Departments table missing. Please run schema.sql to create base tables.' });
+				// If departments table does not exist yet, proceed without strict validation
+				// so that department staff can still be created. Admin can assign later.
 			}
 		}
 
@@ -105,8 +106,11 @@ router.post('/login', async (req, res) => {
 			return res.status(400).json({ message: 'Email and password are required' });
 		}
 		
-		// Find user
-		const user = await getUserByEmail(email);
+		// Find user by email or student_id
+		let user = await getUserByEmail(email);
+		if (!user) {
+			user = await getUserByStudentId(email);
+		}
 		if (!user) {
 			return res.status(401).json({ message: 'Invalid credentials' });
 		}
