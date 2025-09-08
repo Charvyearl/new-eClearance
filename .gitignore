@@ -50,3 +50,7 @@ web/out/
 # Backend
 backend/.cache/
 backend/tmp/
+
+
+# Ignore kluster.ai Verify Code rules
+.cursor/rules/kluster-code-verify.mdc

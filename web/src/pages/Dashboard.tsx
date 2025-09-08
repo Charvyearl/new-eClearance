@@ -182,7 +182,7 @@ const Dashboard: React.FC = () => {
 
       {activeTab === 'users' && (
         <div className="text-center py-12">
-          <p className="text-gray-500">User Management - Coming Soon</p>
+          <p className="text-gray-500">User Management - Coming PUHON</p>
         </div>
       )}
 
