@@ -17,7 +17,8 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
   const [reqTitle, setReqTitle] = useState('');
   const [reqDescription, setReqDescription] = useState('');
   const [reqDueDate, setReqDueDate] = useState('');
-  const [documents, setDocuments] = useState(['']);
+  // Each required document: { name: string, type: 'checkbox' | 'file' }
+  const [documents, setDocuments] = useState([{ name: '', type: 'checkbox' }]);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -54,7 +55,10 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
     setReqTitle(r.title || '');
     setReqDescription(r.description || '');
     setReqDueDate(r.due_date || '');
-    setDocuments(Array.isArray(r.required_documents) && r.required_documents.length ? r.required_documents : ['']);
+    const docs = Array.isArray(r.required_documents) && r.required_documents.length
+      ? r.required_documents.map((d) => (typeof d === 'string' ? { name: d, type: 'checkbox' } : { name: d.name || '', type: (d.type === 'file' ? 'file' : 'checkbox') }))
+      : [{ name: '', type: 'checkbox' }];
+    setDocuments(docs);
     setIsAddOpen(true);
   };
 
@@ -81,15 +85,19 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
     setReqTitle('');
     setReqDescription('');
     setReqDueDate('');
-    setDocuments(['']);
+    setDocuments([{ name: '', type: 'checkbox' }]);
   }
 
   function handleAddDocumentField() {
-    setDocuments((prev) => [...prev, '']);
+    setDocuments((prev) => [...prev, { name: '', type: 'checkbox' }]);
   }
 
-  function handleChangeDocument(value, index) {
-    setDocuments((prev) => prev.map((d, i) => (i === index ? value : d)));
+  function handleChangeDocumentName(value, index) {
+    setDocuments((prev) => prev.map((d, i) => (i === index ? { ...d, name: value } : d)));
+  }
+
+  function handleChangeDocumentType(value, index) {
+    setDocuments((prev) => prev.map((d, i) => (i === index ? { ...d, type: value } : d)));
   }
 
   function handleRemoveDocumentField(index) {
@@ -102,7 +110,9 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
         title: reqTitle,
         description: reqDescription,
         due_date: reqDueDate,
-        required_documents: documents.filter((d) => d.trim() !== ''),
+        required_documents: documents
+          .filter((d) => (d && String(d.name).trim() !== ''))
+          .map((d) => ({ name: String(d.name).trim(), type: d.type === 'file' ? 'file' : 'checkbox' })),
       };
       const isEditing = Boolean(editingId);
       const url = isEditing ? `${API_URL}/requirements/${editingId}` : `${API_URL}/requirements`;
@@ -184,12 +194,15 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
 
               <Text style={styles.requiredDocsLabel}>Required Documents:</Text>
               <View style={styles.documentTags}>
-                {(requirement.required_documents || []).map((doc, index) => (
-                  <View key={index} style={styles.documentTag}>
-                    <Text style={styles.documentIcon}>📄</Text>
-                    <Text style={styles.documentText}>{doc}</Text>
-                  </View>
-                ))}
+                {(requirement.required_documents || []).map((doc, index) => {
+                  const label = typeof doc === 'string' ? doc : (doc && doc.name) ? `${doc.name} • ${doc.type || 'text'}` : 'Document';
+                  return (
+                    <View key={index} style={styles.documentTag}>
+                      <Text style={styles.documentIcon}>📄</Text>
+                      <Text style={styles.documentText}>{label}</Text>
+                    </View>
+                  );
+                })}
               </View>
 
               <Text style={styles.createdDate}>Created: {String(requirement.created_at).slice(0, 10)}</Text>
@@ -309,8 +322,8 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
                     placeholder={`Required Document ${idx + 1}`}
-                    value={doc}
-                    onChangeText={(v) => handleChangeDocument(v, idx)}
+                    value={doc.name}
+                    onChangeText={(v) => handleChangeDocumentName(v, idx)}
                   />
                   {documents.length > 1 ? (
                     <TouchableOpacity style={styles.removeDocBtn} onPress={() => handleRemoveDocumentField(idx)}>
@@ -318,7 +331,47 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
                     </TouchableOpacity>
                   ) : null}
                 </View>
-                {/* File attachments removed as requested */}
+                {/* Document type selector */}
+                {Platform.OS === 'web' ? (
+                  <View style={{ marginTop: 6 }}>
+                    <Text style={styles.webLabel}>Type</Text>
+                    <select
+                      value={doc.type}
+                      onChange={(e) => handleChangeDocumentType(e.target.value, idx)}
+                      style={{
+                        width: '100%',
+                        padding: 10,
+                        borderRadius: 8,
+                        border: '1px solid #e0e0e0',
+                        backgroundColor: '#f7f7f7',
+                        marginTop: 6,
+                      }}
+                    >
+                      <option value="checkbox">Checkbox</option>
+                      <option value="file">Upload File</option>
+                    </select>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: 'row', marginTop: 6 }}>
+                    {['checkbox','file'].map((t) => (
+                      <TouchableOpacity
+                        key={t}
+                        onPress={() => handleChangeDocumentType(t, idx)}
+                        style={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderWidth: 1,
+                          borderColor: '#90caf9',
+                          borderRadius: 6,
+                          marginRight: 8,
+                          backgroundColor: doc.type === t ? '#e3f2fd' : 'transparent'
+                        }}
+                      >
+                        <Text style={{ color: '#1976d2', fontSize: 12 }}>{t === 'checkbox' ? 'Checkbox' : 'File'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
             ))}
 

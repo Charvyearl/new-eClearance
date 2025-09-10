@@ -398,7 +398,7 @@ export default function App() {
         case 'requirements':
           return <RequirementsManagement user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
         case 'requests':
-          return <DepartmentRequests user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+          return <DepartmentRequests user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
         case 'profile':
           return <DepartmentProfile user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
         default:

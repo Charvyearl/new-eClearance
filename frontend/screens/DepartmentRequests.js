@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,37 +10,37 @@ import {
   TextInput
 } from 'react-native';
 
-export default function DepartmentRequests({ user, onLogout, onNavigate }) {
+export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL, token }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All Status');
+  const [requests, setRequests] = useState([]);
+  const [viewing, setViewing] = useState(null); // holds full submission object
 
-  // Mock data - replace with real API calls
-  const requests = [
-    {
-      id: 1,
-      name: 'Jose Hinaut',
-      studentId: 'C22-0055',
-      course: 'Information Technology',
-      timeAgo: '1 day ago',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      name: 'Charvy Cortez',
-      studentId: 'C22-0045',
-      course: 'Information Technology',
-      timeAgo: '2 day ago',
-      status: 'approved'
-    },
-    {
-      id: 3,
-      name: 'Michael Rendado',
-      studentId: 'C22-0012',
-      course: 'Information Technology',
-      timeAgo: '3 day ago',
-      status: 'rejected'
+  async function loadRequests() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // shape items for display
+        setRequests(data.map((r) => ({
+          id: r.id,
+          name: String(r.student_name || r.student_identifier || r.student_user_id),
+          studentId: String(r.student_identifier || r.student_user_id),
+          course: String(r.student_course || ''),
+          timeAgo: new Date(r.created_at).toLocaleString(),
+          status: (r.status || 'submitted').toLowerCase(),
+          requirementTitle: r.requirement_title || 'Requirement'
+        })));
+      } else {
+        setRequests([]);
+      }
+    } catch {
+      setRequests([]);
     }
-  ];
+  }
+
+  useEffect(() => { loadRequests(); }, [token]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -52,10 +52,26 @@ export default function DepartmentRequests({ user, onLogout, onNavigate }) {
     console.log('Filter changed');
   };
 
-  const handleViewRequest = (requestId) => {
-    // Navigate to request details
-    console.log('View request:', requestId);
-  };
+  async function handleViewRequest(requestId) {
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions/${requestId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setViewing(data);
+    } catch {}
+  }
+
+  async function updateStatus(requestId, action) {
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions/${requestId}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await loadRequests();
+      }
+    } catch {}
+  }
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -123,9 +139,9 @@ export default function DepartmentRequests({ user, onLogout, onNavigate }) {
                   <Text style={styles.userIconText}>👤</Text>
                 </View>
                 <View style={styles.requestInfo}>
-                  <Text style={styles.requestName}>{request.name}</Text>
+                  <Text style={styles.requestName}>{request.requirementTitle}</Text>
                   <Text style={styles.requestDetails}>
-                    {request.studentId} • {request.course}
+                    {request.name} • {request.course}
                   </Text>
                   <Text style={styles.requestTime}>{request.timeAgo}</Text>
                 </View>
@@ -141,13 +157,17 @@ export default function DepartmentRequests({ user, onLogout, onNavigate }) {
                   <Text style={styles.statusText}>{request.status}</Text>
                 </View>
                 
-                <TouchableOpacity 
-                  style={styles.viewButton} 
-                  onPress={() => handleViewRequest(request.id)}
-                >
-                  <Text style={styles.viewIcon}>👁️</Text>
-                  <Text style={styles.viewText}>View</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => handleViewRequest(request.id)}>
+                    <Text style={styles.viewText}>View</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => updateStatus(request.id, 'approve')}>
+                    <Text style={styles.viewText}>Approve</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => updateStatus(request.id, 'reject')}>
+                    <Text style={styles.viewText}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -188,6 +208,69 @@ export default function DepartmentRequests({ user, onLogout, onNavigate }) {
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* View Submission Modal */}
+      {viewing ? (
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Submission #{String(viewing.id)}</Text>
+            <Text style={{ color: '#555', marginBottom: 8 }}>{(viewing.requirement && viewing.requirement.title) || 'Requirement'}</Text>
+            <Text style={{ color: '#777', marginBottom: 12 }}>Student: {String(viewing.student_user_id)}</Text>
+
+            <Text style={{ fontWeight: '600', marginBottom: 6 }}>Submitted Responses:</Text>
+            <View style={{ gap: 8 }}>
+              {((viewing.requirement && viewing.requirement.required_documents) || []).map((doc, index) => {
+                const isObj = typeof doc === 'object' && doc;
+                const name = isObj ? (doc.name || `Document ${index+1}`) : String(doc);
+                const type = isObj ? (doc.type || 'checkbox') : 'checkbox';
+                const resp = (viewing.responses || {})[index];
+                const isFile = resp && typeof resp === 'object' && (resp.data || resp.name);
+                return (
+                  <View key={index} style={{ padding: 8, backgroundColor: '#f7f7f7', borderRadius: 8 }}>
+                    <Text style={{ marginBottom: 4 }}>{name} {type === 'checkbox' ? '(checkbox)' : '(file)'}</Text>
+                    {type === 'checkbox' ? (
+                      <Text style={{ color: '#1976d2' }}>{resp ? 'Checked' : 'Unchecked'}</Text>
+                    ) : (
+                      isFile ? (
+                        typeof document !== 'undefined' && resp.data ? (
+                          <View>
+                            {(String(resp.type || '').startsWith('image/')) ? (
+                              <img src={`data:${resp.type};base64,${resp.data}`} style={{ maxWidth: '100%', height: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #eee', marginBottom: 8 }} />
+                            ) : (String(resp.type || '') === 'application/pdf') ? (
+                              <iframe src={`data:application/pdf;base64,${resp.data}`} style={{ width: '100%', height: 320, border: '1px solid #eee', borderRadius: 8, marginBottom: 8 }} />
+                            ) : (
+                              <Text style={{ color: '#666', marginBottom: 8 }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                            )}
+                            <a href={`data:${resp.type || 'application/octet-stream'};base64,${resp.data}`} download={resp.name || `file-${index}`}>Download</a>
+                          </View>
+                        ) : (
+                          <Text style={{ color: '#666' }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                        )
+                      ) : (
+                        <Text style={{ color: '#999' }}>No file submitted</Text>
+                      )
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#4CAF50' }]} onPress={async () => { await updateStatus(viewing.id, 'approve'); setViewing(null); }}>
+                  <Text style={[styles.viewText, { color: '#fff' }]}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#F44336' }]} onPress={async () => { await updateStatus(viewing.id, 'reject'); setViewing(null); }}>
+                  <Text style={[styles.viewText, { color: '#fff' }]}>Reject</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#e0e0e0' }]} onPress={() => setViewing(null)}>
+                <Text style={[styles.viewText, { color: '#333' }]}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -404,5 +487,25 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#1976d2',
     fontWeight: '500',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
   },
 });
