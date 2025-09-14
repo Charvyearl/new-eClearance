@@ -21,6 +21,54 @@ const userSchemas = {
   })
 };
 
+// Student validation schemas
+const studentSchemas = {
+  create: Joi.object({
+    rfid_card_id: Joi.string().required().min(5).max(50),
+    first_name: Joi.string().required().min(2).max(100),
+    last_name: Joi.string().required().min(2).max(100),
+    email: Joi.string().email().optional(),
+    password: Joi.string().required().min(6).max(255),
+    balance: Joi.number().precision(2).min(0).max(10000).default(0)
+  }),
+  
+  update: Joi.object({
+    first_name: Joi.string().min(2).max(100),
+    last_name: Joi.string().min(2).max(100),
+    email: Joi.string().email(),
+    balance: Joi.number().precision(2).min(0).max(10000),
+    is_active: Joi.boolean()
+  }),
+  
+  updatePassword: Joi.object({
+    password: Joi.string().required().min(6).max(255)
+  })
+};
+
+// Personnel validation schemas
+const personnelSchemas = {
+  create: Joi.object({
+    rfid_card_id: Joi.string().required().min(5).max(50),
+    first_name: Joi.string().required().min(2).max(100),
+    last_name: Joi.string().required().min(2).max(100),
+    email: Joi.string().email().optional(),
+    password: Joi.string().required().min(6).max(255),
+    balance: Joi.number().precision(2).min(0).max(10000).default(0)
+  }),
+  
+  update: Joi.object({
+    first_name: Joi.string().min(2).max(100),
+    last_name: Joi.string().min(2).max(100),
+    email: Joi.string().email(),
+    balance: Joi.number().precision(2).min(0).max(10000),
+    is_active: Joi.boolean()
+  }),
+  
+  updatePassword: Joi.object({
+    password: Joi.string().required().min(6).max(255)
+  })
+};
+
 // Wallet validation schemas
 const walletSchemas = {
   topUp: Joi.object({
@@ -111,6 +159,8 @@ const validate = (schema) => {
 
 module.exports = {
   userSchemas,
+  studentSchemas,
+  personnelSchemas,
   walletSchemas,
   menuSchemas,
   orderSchemas,

@@ -101,6 +101,48 @@ export interface Pagination {
   totalPages?: number;
 }
 
+export interface Student {
+  user_id: number;
+  rfid_card_id: string;
+  first_name: string;
+  last_name: string;
+  balance: number;
+  created_at: string;
+  email?: string;
+  is_active: boolean;
+  updated_at: string;
+}
+
+export interface Personnel {
+  personnel_id: number;
+  rfid_card_id: string;
+  first_name: string;
+  last_name: string;
+  balance: number;
+  created_at: string;
+  email?: string;
+  is_active: boolean;
+  updated_at: string;
+}
+
+export interface CreateStudentRequest {
+  rfid_card_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  password: string;
+  balance?: number;
+}
+
+export interface CreatePersonnelRequest {
+  rfid_card_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  password: string;
+  balance?: number;
+}
+
 export interface DashboardStats {
   total_users: number;
   total_transactions: number;

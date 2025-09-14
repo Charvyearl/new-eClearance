@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         updated_at: '2024-01-01T00:00:00Z'
       };
 
-      // Mock token
+      // Mock token for development
       const mockToken = 'mock-jwt-token-' + user.id;
 
       setUser(user);

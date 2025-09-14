@@ -161,6 +161,38 @@ INSERT INTO menu_categories (name, description) VALUES
 ('Snacks', 'Light snacks and desserts'),
 ('Salads', 'Fresh salads and healthy options');
 
+-- Students table
+CREATE TABLE students (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    rfid_card_id VARCHAR(50) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    balance DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    email VARCHAR(255) UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_rfid (rfid_card_id),
+    INDEX idx_email (email)
+);
+
+-- Personnel table
+CREATE TABLE personnel (
+    personnel_id INT PRIMARY KEY AUTO_INCREMENT,
+    rfid_card_id VARCHAR(50) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    balance DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    email VARCHAR(255) UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_rfid (rfid_card_id),
+    INDEX idx_email (email)
+);
+
 -- Insert default system settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ('system_name', 'Cashless Canteen System', 'Name of the canteen system'),

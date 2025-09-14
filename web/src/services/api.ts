@@ -5,7 +5,11 @@ import {
   User, 
   MenuItem, 
   Wallet,
-  DashboardStats 
+  DashboardStats,
+  Student,
+  Personnel,
+  CreateStudentRequest,
+  CreatePersonnelRequest
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
@@ -166,6 +170,47 @@ export const transactionsAPI = {
 export const dashboardAPI = {
   getStats: (): Promise<AxiosResponse<ApiResponse<DashboardStats>>> =>
     api.get('/dashboard/stats'),
+};
+
+// Admin API
+export const adminAPI = {
+  // Student Management
+  createStudent: (data: CreateStudentRequest): Promise<AxiosResponse<ApiResponse<Student>>> =>
+    api.post('/admin/students', data),
+  
+  getStudents: (params?: { page?: number; limit?: number; is_active?: boolean }) =>
+    api.get('/admin/students', { params }),
+  
+  getStudent: (id: number): Promise<AxiosResponse<ApiResponse<Student>>> =>
+    api.get(`/admin/students/${id}`),
+  
+  updateStudent: (id: number, data: Partial<Student>) =>
+    api.put(`/admin/students/${id}`, data),
+  
+  updateStudentPassword: (id: number, password: string) =>
+    api.put(`/admin/students/${id}/password`, { password }),
+  
+  deleteStudent: (id: number) =>
+    api.delete(`/admin/students/${id}`),
+  
+  // Personnel Management
+  createPersonnel: (data: CreatePersonnelRequest): Promise<AxiosResponse<ApiResponse<Personnel>>> =>
+    api.post('/admin/personnel', data),
+  
+  getPersonnel: (params?: { page?: number; limit?: number; is_active?: boolean }) =>
+    api.get('/admin/personnel', { params }),
+  
+  getPersonnelById: (id: number): Promise<AxiosResponse<ApiResponse<Personnel>>> =>
+    api.get(`/admin/personnel/${id}`),
+  
+  updatePersonnel: (id: number, data: Partial<Personnel>) =>
+    api.put(`/admin/personnel/${id}`, data),
+  
+  updatePersonnelPassword: (id: number, password: string) =>
+    api.put(`/admin/personnel/${id}/password`, { password }),
+  
+  deletePersonnel: (id: number) =>
+    api.delete(`/admin/personnel/${id}`),
 };
 
 export default api;

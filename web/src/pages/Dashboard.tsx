@@ -106,7 +106,10 @@ const Dashboard: React.FC = () => {
               className="block w-64 pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+          <button 
+            onClick={() => window.location.href = '/users'}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
             <PlusIcon className="h-5 w-5" />
             <span>Add User</span>
           </button>
@@ -182,7 +185,13 @@ const Dashboard: React.FC = () => {
 
       {activeTab === 'users' && (
         <div className="text-center py-12">
-          <p className="text-gray-500">User Management - Coming Soon</p>
+          <p className="text-gray-500 mb-4">User Management</p>
+          <button 
+            onClick={() => window.location.href = '/users'}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Go to Account Management
+          </button>
         </div>
       )}
 

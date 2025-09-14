@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const walletRoutes = require('./routes/wallets');
 const transactionRoutes = require('./routes/transactions');
 const menuRoutes = require('./routes/menu');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/wallets', walletRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/menu', menuRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
