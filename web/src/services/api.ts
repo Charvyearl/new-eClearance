@@ -140,6 +140,19 @@ export const menuAPI = {
   
   deleteItem: (id: number) =>
     api.delete(`/menu/items/${id}`),
+  // Products (canteen)
+  createProduct: (data: { product_name: string; description?: string; price: number; category: string; stock_quantity: number; is_available?: boolean }) =>
+    api.post('/menu/products', data),
+  getProducts: (params?: { category?: string; available_only?: boolean }) =>
+    api.get('/menu/products', { params }),
+  getProduct: (id: number) =>
+    api.get(`/menu/products/${id}`),
+  updateProduct: (id: number, data: Partial<{ product_name: string; description: string; price: number; category: string; stock_quantity: number; is_available: boolean }>) =>
+    api.put(`/menu/products/${id}`, data),
+  toggleProductAvailability: (id: number) =>
+    api.patch(`/menu/products/${id}/availability`),
+  deleteProduct: (id: number) =>
+    api.delete(`/menu/products/${id}`),
 };
 
 // Transactions API

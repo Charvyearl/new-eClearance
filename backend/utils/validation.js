@@ -90,6 +90,7 @@ const menuSchemas = {
     name: Joi.string().required().min(2).max(200),
     description: Joi.string().optional().max(1000),
     price: Joi.number().positive().precision(2).max(1000).required(),
+    stock: Joi.number().integer().min(0).default(0),
     image_url: Joi.string().uri().optional(),
     is_available: Joi.boolean().default(true)
   }),
@@ -99,6 +100,7 @@ const menuSchemas = {
     name: Joi.string().min(2).max(200),
     description: Joi.string().max(1000),
     price: Joi.number().positive().precision(2).max(1000),
+    stock: Joi.number().integer().min(0),
     image_url: Joi.string().uri(),
     is_available: Joi.boolean()
   }),
@@ -106,6 +108,26 @@ const menuSchemas = {
   createCategory: Joi.object({
     name: Joi.string().required().min(2).max(100),
     description: Joi.string().optional().max(500)
+  })
+};
+
+// Product validation schemas (canteen staff products)
+const productSchemas = {
+  create: Joi.object({
+    product_name: Joi.string().required().min(2).max(200),
+    description: Joi.string().allow('', null).max(1000),
+    price: Joi.number().positive().precision(2).max(10000).required(),
+    category: Joi.string().required().min(2).max(100),
+    stock_quantity: Joi.number().integer().min(0).default(0),
+    is_available: Joi.boolean().default(true)
+  }),
+  update: Joi.object({
+    product_name: Joi.string().min(2).max(200),
+    description: Joi.string().allow('', null).max(1000),
+    price: Joi.number().positive().precision(2).max(10000),
+    category: Joi.string().min(2).max(100),
+    stock_quantity: Joi.number().integer().min(0),
+    is_available: Joi.boolean()
   })
 };
 
@@ -165,5 +187,6 @@ module.exports = {
   menuSchemas,
   orderSchemas,
   reservationSchemas,
+  productSchemas,
   validate
 };

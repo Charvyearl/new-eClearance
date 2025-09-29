@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { MenuCategory, MenuItem } = require('../models/Menu');
+const Product = require('../models/Product');
 const { verifyToken, requireStaff, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validation');
-const { menuSchemas } = require('../utils/validation');
+const { menuSchemas, productSchemas } = require('../utils/validation');
 
 // Get full menu (public)
 router.get('/', optionalAuth, async (req, res) => {
@@ -343,6 +344,75 @@ router.delete('/items/:id', verifyToken, requireStaff, async (req, res) => {
       message: 'Failed to delete menu item',
       error: error.message
     });
+  }
+});
+
+// Products (Canteen Staff)
+router.post('/products', verifyToken, requireStaff, validate(productSchemas.create), async (req, res) => {
+  try {
+    const product = await Product.create(req.body);
+    res.status(201).json({ success: true, message: 'Product created', data: product });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create product', error: error.message });
+  }
+});
+
+router.get('/products', optionalAuth, async (req, res) => {
+  try {
+    const { category, available_only } = req.query;
+    const items = await Product.findAll({ category, available_only: available_only !== 'false' });
+    res.json({ success: true, data: items });
+  } catch (error) {
+    console.error('List products error:', error);
+    res.status(500).json({ success: false, message: 'Failed to list products', error: error.message });
+  }
+});
+
+router.get('/products/:id', optionalAuth, async (req, res) => {
+  try {
+    const item = await Product.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Product not found' });
+    res.json({ success: true, data: item });
+  } catch (error) {
+    console.error('Get product error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get product', error: error.message });
+  }
+});
+
+router.put('/products/:id', verifyToken, requireStaff, validate(productSchemas.update), async (req, res) => {
+  try {
+    const item = await Product.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Product not found' });
+    await item.update(req.body);
+    res.json({ success: true, message: 'Product updated', data: item });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update product', error: error.message });
+  }
+});
+
+router.patch('/products/:id/availability', verifyToken, requireStaff, async (req, res) => {
+  try {
+    const item = await Product.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Product not found' });
+    await item.toggleAvailability();
+    res.json({ success: true, data: { product_id: item.product_id, is_available: item.is_available } });
+  } catch (error) {
+    console.error('Toggle product availability error:', error);
+    res.status(500).json({ success: false, message: 'Failed to toggle availability', error: error.message });
+  }
+});
+
+router.delete('/products/:id', verifyToken, requireStaff, async (req, res) => {
+  try {
+    const item = await Product.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Product not found' });
+    await item.delete();
+    res.json({ success: true, message: 'Product disabled' });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });
   }
 });
 

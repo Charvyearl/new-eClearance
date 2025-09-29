@@ -141,13 +141,14 @@ class MenuItem {
   static async create(itemData) {
     try {
       const [result] = await pool.execute(
-        `INSERT INTO menu_items (category_id, name, description, price, image_url, is_available) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO menu_items (category_id, name, description, price, stock, image_url, is_available) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           itemData.category_id,
           itemData.name,
           itemData.description || null,
           itemData.price,
+          itemData.stock ?? 0,
           itemData.image_url || null,
           itemData.is_available !== undefined ? itemData.is_available : true
         ]
@@ -240,7 +241,7 @@ class MenuItem {
   // Update menu item
   async update(updateData) {
     try {
-      const allowedFields = ['category_id', 'name', 'description', 'price', 'image_url', 'is_available', 'is_active'];
+      const allowedFields = ['category_id', 'name', 'description', 'price', 'stock', 'image_url', 'is_available', 'is_active'];
       const updates = [];
       const values = [];
       

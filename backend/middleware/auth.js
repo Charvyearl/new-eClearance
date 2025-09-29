@@ -15,7 +15,36 @@ const verifyToken = async (req, res, next) => {
     }
     
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
+    // Development mock token support: 'mock-jwt-token-<userId>'
+    if (token.startsWith('mock-jwt-token-')) {
+      const mockedId = parseInt(token.replace('mock-jwt-token-', ''), 10);
+      if (!Number.isNaN(mockedId)) {
+        try {
+          const [users] = await pool.execute(
+            'SELECT id, rfid_card_id, first_name, last_name, user_type, is_active FROM users WHERE id = ?',
+            [mockedId]
+          );
+          if (users.length > 0 && users[0].is_active) {
+            req.user = users[0];
+            return next();
+          }
+        } catch (_) {}
+
+        // Fallback mock user (development only)
+        const mockRole = mockedId === 1 ? 'admin' : 'staff';
+        req.user = {
+          id: mockedId,
+          rfid_card_id: mockRole === 'admin' ? 'ADMIN001' : 'STAFF001',
+          first_name: mockRole === 'admin' ? 'Admin' : 'Staff',
+          last_name: mockRole === 'admin' ? 'User' : 'Member',
+          user_type: mockRole,
+          is_active: true
+        };
+        return next();
+      }
+    }
+
     const decoded = jwt.verify(token, config.jwt.secret);
     
     // Verify user still exists and is active

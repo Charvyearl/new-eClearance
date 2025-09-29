@@ -7,12 +7,14 @@ import {
   ChartBarIcon, 
   ShoppingBagIcon,
   CogIcon,
+  BuildingStorefrontIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Canteen', href: '/canteen', icon: BuildingStorefrontIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Wallets', href: '/wallets', icon: CreditCardIcon },
   { name: 'Transactions', href: '/transactions', icon: ChartBarIcon },

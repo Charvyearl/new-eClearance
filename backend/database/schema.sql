@@ -43,21 +43,22 @@ CREATE TABLE menu_categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Menu items
-CREATE TABLE menu_items (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    category_id INT NOT NULL,
-    name VARCHAR(200) NOT NULL,
+-- (Deprecated) menu_items table removed in favor of PRODUCT
+
+-- Canonical products table for canteen staff flow
+CREATE TABLE IF NOT EXISTS PRODUCT (
+    product_id INT PRIMARY KEY AUTO_INCREMENT,
+    product_name VARCHAR(200) NOT NULL,
     description TEXT,
     price DECIMAL(8,2) NOT NULL,
-    image_url VARCHAR(500),
+    category VARCHAR(100) NOT NULL,
+    stock_quantity INT NOT NULL DEFAULT 0,
     is_available BOOLEAN DEFAULT TRUE,
-    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES menu_categories(id) ON DELETE CASCADE,
-    INDEX idx_category_id (category_id),
-    INDEX idx_is_available (is_available)
+    INDEX idx_product_name (product_name),
+    INDEX idx_category (category),
+    INDEX idx_available (is_available)
 );
 
 -- Transaction types
@@ -110,29 +111,29 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
-    menu_item_id INT NOT NULL,
+    product_id INT NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     unit_price DECIMAL(8,2) NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id) ON DELETE CASCADE,
     INDEX idx_order_id (order_id),
-    INDEX idx_menu_item_id (menu_item_id)
+    INDEX idx_product_id (product_id)
 );
 
 -- Reservations table
 CREATE TABLE reservations (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
-    menu_item_id INT NOT NULL,
+    product_id INT NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     reservation_date DATE NOT NULL,
     status ENUM('active', 'fulfilled', 'cancelled', 'expired') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
     INDEX idx_reservation_date (reservation_date),
     INDEX idx_status (status)
