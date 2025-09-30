@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Dashboard from './src/screens/Dashboard';
 import PersonnelDashboard from './src/screens/PersonnelDashboard';
+import { authAPI, setAuthToken, getBaseUrl } from './src/api/client';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,9 @@ export default function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [authToken, setAuthTokenState] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [initialBalance, setInitialBalance] = useState(0);
 
   const handleRoleSelect = (role) => {
     if (selectedRole === role) {
@@ -34,17 +38,24 @@ export default function App() {
     }
   };
 
-  const handleLogin = () => {
-    if (!username || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleLogin = async () => {
+    if (!username) {
+      Alert.alert('Error', 'Enter any ID to continue (auth disabled)');
       return;
     }
-    
-    // TODO: Implement actual login logic
-    console.log(`${currentScreen} Login:`, { username, password });
-    Alert.alert('Success', `${currentScreen} login successful!`);
-    
-    // Navigate to appropriate dashboard based on role
+    // Auth bypass: create a placeholder user and proceed
+    const fakeUser = {
+      id: 0,
+      rfid_card_id: username.trim(),
+      student_id: currentScreen === 'student' ? username.trim() : undefined,
+      first_name: currentScreen === 'student' ? 'Student' : 'Personnel',
+      last_name: 'User',
+      user_type: currentScreen === 'student' ? 'student' : 'staff',
+    };
+    setAuthToken();
+    setAuthTokenState(null);
+    setCurrentUser(fakeUser);
+    setInitialBalance(0);
     if (currentScreen === 'student') {
       setCurrentScreen('student-dashboard');
     } else if (currentScreen === 'personnel') {
@@ -65,6 +76,10 @@ export default function App() {
     setUsername('');
     setPassword('');
     setShowPassword(false);
+    setAuthToken();
+    setAuthTokenState(null);
+    setCurrentUser(null);
+    setInitialBalance(0);
   };
 
   // Render Landing Screen
@@ -194,8 +209,11 @@ export default function App() {
       <StatusBar style="light" />
       
       {/* Render appropriate screen */}
-      {currentScreen === 'student-dashboard' ? <Dashboard onLogout={handleLogout} /> :
-       currentScreen === 'personnel-dashboard' ? <PersonnelDashboard onLogout={handleLogout} /> : (
+      {currentScreen === 'student-dashboard' ? (
+        <Dashboard onLogout={handleLogout} user={currentUser} initialBalance={initialBalance} />
+      ) : currentScreen === 'personnel-dashboard' ? (
+        <PersonnelDashboard onLogout={handleLogout} user={currentUser} initialBalance={initialBalance} />
+      ) : (
         <ImageBackground
           source={require('./assets/images/background.jpg')}
           style={styles.backgroundImage}

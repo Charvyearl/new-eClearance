@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,9 +12,27 @@ import {
 import StudentHome from './StudentHome';
 import TransactionHistory from './TransactionHistory';
 import BottomNavigation from '../components/BottomNavigation';
+import { walletAPI } from '../api/client';
 
-export default function Dashboard({ onLogout }) {
+export default function Dashboard({ onLogout, user, initialBalance = 0 }) {
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'transaction'
+  const [balance, setBalance] = useState(initialBalance);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const res = await walletAPI.getBalance();
+        if (isMounted && res?.success) {
+          setBalance(res.data.balance);
+        }
+      } catch (e) {
+        // Silent fail for now; could show a toast
+      }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -58,7 +76,7 @@ export default function Dashboard({ onLogout }) {
       <View style={styles.dashboardHeader}>
         <View style={styles.welcomeSection}>
           <Text style={styles.welcomeText}>Welcome</Text>
-          <Text style={styles.studentName}>Jose Adrianne Hinaut</Text>
+          <Text style={styles.studentName}>{user ? `${user.first_name} ${user.last_name}` : 'Student'}</Text>
         </View>
       </View>
 
@@ -70,16 +88,16 @@ export default function Dashboard({ onLogout }) {
         </View>
         <Text style={styles.balanceSubtitle}>Your current wallet balance</Text>
         <View style={styles.balanceAmountContainer}>
-          <Text style={styles.balanceAmount}>₱450.75</Text>
+          <Text style={styles.balanceAmount}>₱{Number(balance).toFixed(2)}</Text>
         </View>
         <View style={styles.studentInfo}>
           <View style={styles.studentInfoColumn}>
             <Text style={styles.studentInfoLabel}>Student ID</Text>
-            <Text style={styles.studentInfoValue}>C22-0057</Text>
+            <Text style={styles.studentInfoValue}>{user?.student_id || '—'}</Text>
           </View>
           <View style={styles.studentInfoColumn}>
             <Text style={styles.studentInfoLabel}>Student Name</Text>
-            <Text style={styles.studentInfoValue}>Jose Adrianne Hinaut</Text>
+            <Text style={styles.studentInfoValue}>{user ? `${user.first_name} ${user.last_name}` : '—'}</Text>
           </View>
         </View>
       </View>

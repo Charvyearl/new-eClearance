@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,10 +7,38 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { menuAPI } from '../api/client';
 
 export default function PersonnelHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await menuAPI.getProducts({ available_only: true, limit: 20 });
+        if (isMounted && res?.success && Array.isArray(res.data) && res.data.length > 0) {
+          setItems(res.data);
+        } else {
+          const res2 = await menuAPI.getItems({ available_only: true, limit: 20 });
+          if (isMounted && res2?.success) setItems(res2.data.items || []);
+        }
+      } catch (e) {
+        try {
+          const res2 = await menuAPI.getItems({ available_only: true, limit: 20 });
+          if (isMounted && res2?.success) setItems(res2.data.items || []);
+        } catch (_) {}
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleAddToReservation = (itemName) => {
     Alert.alert(
@@ -49,25 +77,36 @@ export default function PersonnelHome() {
         </TouchableOpacity>
       </View>
 
-      {/* Menu Item Card */}
-      <View style={styles.menuItemCard}>
-        <View style={styles.menuItemHeader}>
-          <Text style={styles.menuItemName}>Chicken Sandwich</Text>
-          <Text style={styles.menuItemPrice}>₱15.50</Text>
-        </View>
-        <View style={styles.menuItemCategory}>
-          <Text style={styles.categoryTag}>Food</Text>
-        </View>
-        <Text style={styles.menuItemDescription}>
-          Grilled chicken breast with lettuce and tomato on fresh bread
-        </Text>
-        <TouchableOpacity 
-          style={styles.reservationButton}
-          onPress={() => handleAddToReservation('Chicken Sandwich')}
-        >
-          <Text style={styles.reservationButtonText}>Add to Reservation</Text>
-        </TouchableOpacity>
-      </View>
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : items.length === 0 ? (
+        <Text>No items available</Text>
+      ) : (
+        items.map((item) => (
+          <View key={item.id || item.product_id} style={styles.menuItemCard}>
+            <View style={styles.menuItemHeader}>
+              <Text style={styles.menuItemName}>{item.name || item.product_name}</Text>
+              <Text style={styles.menuItemPrice}>₱{Number(item.price).toFixed(2)}</Text>
+            </View>
+            {!!(item.category || item.category_name) && (
+              <View style={styles.menuItemCategory}>
+                <Text style={styles.categoryTag}>{item.category || item.category_name}</Text>
+              </View>
+            )}
+            {item.description ? (
+              <Text style={styles.menuItemDescription}>{item.description}</Text>
+            ) : null}
+            <TouchableOpacity 
+              style={styles.reservationButton}
+              onPress={() => handleAddToReservation(item.name || item.product_name)}
+            >
+              <Text style={styles.reservationButtonText}>
+                {item.is_available ? 'Add to Reservation' : 'Unavailable'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
     </View>
   );
 }
