@@ -11,8 +11,20 @@ const walletRoutes = require('./routes/wallets');
 const transactionRoutes = require('./routes/transactions');
 const menuRoutes = require('./routes/menu');
 const adminRoutes = require('./routes/admin');
+const rfidRoutes = require('./routes/rfid');
 
 const app = express();
+
+// CORS configuration (place BEFORE security middlewares to ensure preflight headers are set)
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://yourdomain.com'] // Replace with your actual domain
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+// Explicitly handle preflight
+app.options('*', cors(corsOptions));
 
 // Security middleware
 app.use(helmet());
@@ -24,14 +36,6 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use(limiter);
-
-// CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Replace with your actual domain
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'],
-  credentials: true
-}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -53,6 +57,7 @@ app.use('/api/wallets', walletRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/rfid', rfidRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -83,6 +88,11 @@ const startServer = async () => {
       process.exit(1);
     }
     
+    if (config.nodeEnv !== 'production') {
+      // Safe boolean-only log for device key presence
+      console.log('IOT_DEVICE_KEY set:', Boolean(process.env.IOT_DEVICE_KEY));
+    }
+
     app.listen(config.port, () => {
       console.log(`🚀 Server running on port ${config.port}`);
       console.log(`📊 Environment: ${config.nodeEnv}`);

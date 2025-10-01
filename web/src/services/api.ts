@@ -185,6 +185,13 @@ export const dashboardAPI = {
     api.get('/dashboard/stats'),
 };
 
+// RFID API
+export const rfidAPI = {
+  createSession: () => api.post('/rfid/sessions'),
+  getSession: (id: string) => api.get(`/rfid/sessions/${id}`),
+  getLatest: () => api.get('/rfid/latest'),
+};
+
 // Admin API
 export const adminAPI = {
   // Student Management

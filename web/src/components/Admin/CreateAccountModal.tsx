@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { XMarkIcon, UserIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
-import { adminAPI } from '../../services/api';
+import { adminAPI, rfidAPI } from '../../services/api';
 import { CreateStudentRequest, CreatePersonnelRequest } from '../../types';
 
 interface CreateAccountModalProps {
@@ -29,6 +29,11 @@ const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
     confirmPassword: '',
     balance: 0
   });
+  const [scanning, setScanning] = useState(false);
+  const [scanComplete, setScanComplete] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [useAutoFill, setUseAutoFill] = useState(true); // no-session auto mode
+  const [pollTimer, setPollTimer] = useState<number | undefined>(undefined);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,6 +52,12 @@ const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       // Validate passwords match
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.rfid_card_id) {
+        setError('RFID card is required. Click Scan RFID to read a card.');
         setLoading(false);
         return;
       }
@@ -75,12 +86,81 @@ const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
         confirmPassword: '',
         balance: 0
       });
+      setScanning(false);
+      setScanComplete(false);
+      setSessionId(null);
       onSuccess();
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create account');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startAutoFill = () => {
+    setScanning(true);
+    setScanComplete(false);
+    const startedAt = Date.now();
+    const poll = async () => {
+      try {
+        const res = await rfidAPI.getLatest();
+        const latest = res?.data?.data;
+        if (latest?.rfid_card_id) {
+          setFormData(prev => ({ ...prev, rfid_card_id: latest.rfid_card_id }));
+          setScanComplete(true);
+          setScanning(false);
+          return;
+        }
+      } catch (_) {}
+      if (Date.now() - startedAt < 60_000) {
+        const id = window.setTimeout(poll, 800);
+        setPollTimer(id);
+      } else {
+        setScanning(false);
+        setError('No recent scans detected. Try again.');
+      }
+    };
+    poll();
+  };
+
+  const startScan = async () => {
+    setError(null);
+    setScanning(true);
+    setScanComplete(false);
+    setSessionId(null);
+    if (useAutoFill) {
+      startAutoFill();
+      return;
+    }
+    try {
+      const { data } = await rfidAPI.createSession();
+      const id = data?.data?.session_id as string;
+      setSessionId(id);
+
+      const startedAt = Date.now();
+      const poll = async () => {
+        try {
+          const res = await rfidAPI.getSession(id);
+          const uid = res?.data?.data?.rfid_card_id as string | null;
+          if (uid) {
+            setFormData(prev => ({ ...prev, rfid_card_id: uid }));
+            setScanComplete(true);
+            setScanning(false);
+            return;
+          }
+        } catch (_) {}
+        if (Date.now() - startedAt < 60_000) {
+          setTimeout(poll, 1000);
+        } else {
+          setScanning(false);
+          setError('Scan timed out. Try again.');
+        }
+      };
+      setTimeout(poll, 750);
+    } catch (e: any) {
+      setScanning(false);
+      setError(e?.response?.data?.message || 'Failed to start scan');
     }
   };
 
@@ -95,6 +175,10 @@ const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       confirmPassword: '',
       balance: 0
     });
+    setScanning(false);
+    setScanComplete(false);
+    setSessionId(null);
+    if (pollTimer) window.clearTimeout(pollTimer);
     onClose();
   };
 
@@ -167,15 +251,37 @@ const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               RFID Card ID *
             </label>
-            <input
-              type="text"
-              name="rfid_card_id"
-              value={formData.rfid_card_id}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter RFID card ID"
-            />
+            {!scanComplete ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={startScan}
+                  disabled={scanning}
+                  className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {scanning ? 'Waiting for tap…' : 'Scan RFID'}
+                </button>
+                <input
+                  type="text"
+                  name="rfid_card_id"
+                  value={formData.rfid_card_id}
+                  onChange={handleInputChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="(or enter manually)"
+                />
+              </div>
+            ) : (
+              <input
+                type="text"
+                name="rfid_card_id"
+                value={formData.rfid_card_id}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+              />
+            )}
+            <div className="mt-2 text-xs text-gray-500">
+              Auto mode: waits for the most recent scan from any connected reader. For pairing a specific reader, switch to session mode.
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

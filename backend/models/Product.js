@@ -85,8 +85,10 @@ class Product {
   }
 
   async delete() {
-    await pool.execute('UPDATE PRODUCT SET is_available = FALSE WHERE product_id = ?', [this.product_id]);
-    this.is_available = false;
+    // Perform a hard delete so the product row is removed from the database.
+    // Related rows in tables like order_items and reservations are configured
+    // with ON DELETE CASCADE in the schema and will be cleaned up automatically.
+    await pool.execute('DELETE FROM PRODUCT WHERE product_id = ?', [this.product_id]);
     return this;
   }
 

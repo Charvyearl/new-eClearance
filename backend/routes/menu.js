@@ -409,7 +409,7 @@ router.delete('/products/:id', verifyToken, requireStaff, async (req, res) => {
     const item = await Product.findById(req.params.id);
     if (!item) return res.status(404).json({ success: false, message: 'Product not found' });
     await item.delete();
-    res.json({ success: true, message: 'Product disabled' });
+    res.json({ success: true, message: 'Product deleted' });
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });
