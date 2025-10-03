@@ -34,6 +34,22 @@ async function listDepartments() {
 	return query('SELECT id, name, description FROM departments ORDER BY name ASC');
 }
 
-module.exports = { ensureDepartmentsTable, listDepartments };
+async function createDepartment({ name, description = null }) {
+  await query('INSERT INTO departments (name, description) VALUES (?, ?)', [name, description]);
+  const rows = await query('SELECT id, name, description FROM departments WHERE name = ? LIMIT 1', [name]);
+  return rows[0];
+}
+
+async function updateDepartment(id, { name, description = null }) {
+  await query('UPDATE departments SET name = ?, description = ? WHERE id = ?', [name, description, id]);
+  const rows = await query('SELECT id, name, description FROM departments WHERE id = ? LIMIT 1', [id]);
+  return rows[0];
+}
+
+async function deleteDepartment(id) {
+  await query('DELETE FROM departments WHERE id = ?', [id]);
+}
+
+module.exports = { ensureDepartmentsTable, listDepartments, createDepartment, updateDepartment, deleteDepartment };
 
 

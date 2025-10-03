@@ -1,5 +1,53 @@
 import React from 'react';
-import { View, Text, TextInput, Button, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, ActivityIndicator, TouchableOpacity } from 'react-native';
+function AddDepartmentForm({ API_URL, token, onCreated, styles }) {
+  const [name, setName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+
+  async function handleCreate() {
+    if (!name.trim()) return;
+    try {
+      setSaving(true);
+      const res = await fetch(`${API_URL}/departments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data && data.message ? data.message : 'Failed to create department');
+        return;
+      }
+      setName('');
+      setDescription('');
+      if (onCreated) onCreated();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View>
+      <TextInput
+        style={styles.input}
+        placeholder="Department Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Description (optional)"
+        value={description}
+        onChangeText={setDescription}
+      />
+      <Button title={saving ? 'Saving...' : 'Add Department'} onPress={handleCreate} disabled={saving} />
+    </View>
+  );
+}
 
 export default function AdminPanel(props) {
   const {
@@ -27,14 +75,11 @@ export default function AdminPanel(props) {
     departments,
     submitting,
     handleRegister,
-    // User management state/handlers
-    editingId,
-    resetForm,
-    handleSubmit,
+    API_URL,
+    token,
+    loadDepartments,
     loading,
-    users,
-    handleEdit,
-    handleDelete,
+    onViewAccounts,
   } = props;
 
   return (
@@ -141,64 +186,19 @@ export default function AdminPanel(props) {
               disabled={submitting}
             />
           </View>
+
+          {registrationMode === 'department' && (
+            <View style={[styles.formRow, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E0E0E0' }]}>
+              <Text style={[styles.sectionTitle, { marginBottom: 8 }]}>Add New Department</Text>
+              <AddDepartmentForm API_URL={API_URL} token={token} onCreated={loadDepartments} styles={styles} />
+            </View>
+          )}
         </View>
       )}
 
-      <View style={styles.formRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <Button
-          title={editingId ? 'Update' : 'Add'}
-          onPress={handleSubmit}
-          disabled={submitting}
-        />
-        {editingId ? (
-          <View style={{ marginTop: 8 }}>
-            <Button title="Cancel" color="#888" onPress={resetForm} />
-          </View>
-        ) : null}
-      </View>
+      {/* Removed inline Name/Email user form */}
 
-      {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 16 }} />
-      ) : (
-        <FlatList
-          data={users}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingVertical: 8 }}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => (
-            <View style={styles.listItem}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
-              </View>
-              <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(item)}>
-                <Text style={styles.btnText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                <Text style={styles.btnText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          ListEmptyComponent={!loading ? (
-            <Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>No users</Text>
-          ) : null}
-        />
-      )}
+      {/* Accounts moved to dedicated screen via AdminNav */}
     </>
   );
 }

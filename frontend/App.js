@@ -24,6 +24,9 @@ import DepartmentDashboard from './screens/DepartmentDashboard';
 import RequirementsManagement from './screens/RequirementsManagement';
 import DepartmentRequests from './screens/DepartmentRequests';
 import DepartmentProfile from './screens/DepartmentProfile';
+import AdminAccounts from './screens/AdminAccounts';
+import AdminBottomNavigation from './components/AdminBottomNavigation';
+import AdminDepartments from './screens/AdminDepartments';
 
 export default function App() {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'admin-login'
@@ -46,6 +49,7 @@ export default function App() {
   const [registrationMode, setRegistrationMode] = useState('student'); // 'student' or 'department'
   const [currentScreen, setCurrentScreen] = useState('dashboard'); // 'dashboard', 'requirements', 'profile'
   const [departmentScreen, setDepartmentScreen] = useState('dashboard'); // 'dashboard', 'requirements', 'requests', 'profile'
+  const [adminScreen, setAdminScreen] = useState('panel'); // 'panel' | 'accounts' | 'departments'
   const [showWelcome, setShowWelcome] = useState(true); // Added state for welcome screen
   
 
@@ -406,38 +410,111 @@ export default function App() {
       }
     } else {
       return (
-        <AdminPanel
-          user={user}
-          styles={styles}
-          registrationMode={registrationMode}
-          setRegistrationMode={setRegistrationMode}
-          name={name}
-          setName={setName}
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          phone={phone}
-          setPhone={setPhone}
-          course={course}
-          setCourse={setCourse}
-          studentId={studentId}
-          setStudentId={setStudentId}
-          yearLevel={yearLevel}
-          setYearLevel={setYearLevel}
-          departmentId={departmentId}
-          setDepartmentId={setDepartmentId}
-          departments={departments}
-          submitting={submitting}
-          handleRegister={handleRegister}
-          editingId={editingId}
-          resetForm={resetForm}
-          handleSubmit={handleSubmit}
-          loading={loading}
-          users={users}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-        />
+        <>
+          <View style={{ flex: 1 }}>
+            {adminScreen === 'panel' && (
+              <AdminPanel
+                user={user}
+                styles={styles}
+                registrationMode={registrationMode}
+                setRegistrationMode={setRegistrationMode}
+                API_URL={API_URL}
+                token={token}
+                loadDepartments={loadDepartments}
+                name={name}
+                setName={setName}
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                phone={phone}
+                setPhone={setPhone}
+                course={course}
+                setCourse={setCourse}
+                studentId={studentId}
+                setStudentId={setStudentId}
+                yearLevel={yearLevel}
+                setYearLevel={setYearLevel}
+                departmentId={departmentId}
+                setDepartmentId={setDepartmentId}
+                departments={departments}
+                submitting={submitting}
+                handleRegister={handleRegister}
+                loading={loading}
+              />
+            )}
+            {adminScreen === 'accounts' && (
+              <AdminAccounts
+                styles={styles}
+                users={users}
+                loading={loading}
+                handleDelete={handleDelete}
+                onUpdateUser={async (id, payload) => {
+                  try {
+                    const res = await fetch(`${API_URL}/users/${id}`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify(payload),
+                    });
+                    if (!res.ok) {
+                      const msg = res.status === 409 ? 'Email already exists' : 'Update failed';
+                      Alert.alert('Error', msg);
+                      return;
+                    }
+                    await loadUsers();
+                  } catch (e) {
+                    Alert.alert('Error', 'Update failed');
+                  }
+                }}
+              />
+            )}
+            {adminScreen === 'departments' && (
+              <AdminDepartments
+                styles={styles}
+                departments={departments}
+                loading={loading}
+                onRefresh={loadDepartments}
+                onUpdate={async (id, payload) => {
+                  try {
+                    const res = await fetch(`${API_URL}/departments/${id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                      body: JSON.stringify(payload),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => ({}));
+                      Alert.alert('Error', data.message || 'Update failed');
+                      return;
+                    }
+                    await loadDepartments();
+                  } catch (e) {
+                    Alert.alert('Error', 'Update failed');
+                  }
+                }}
+                onDelete={async (id) => {
+                  try {
+                    const res = await fetch(`${API_URL}/departments/${id}`, {
+                      method: 'DELETE',
+                      headers: { 'Authorization': `Bearer ${token}` },
+                    });
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => ({}));
+                      Alert.alert('Error', data.message || 'Delete failed');
+                      return;
+                    }
+                    await loadDepartments();
+                  } catch (e) {
+                    Alert.alert('Error', 'Delete failed');
+                  }
+                }}
+              />
+            )}
+          </View>
+          <AdminBottomNavigation currentTab={adminScreen} setCurrentTab={setAdminScreen} />
+        </>
       );
     }
   };
