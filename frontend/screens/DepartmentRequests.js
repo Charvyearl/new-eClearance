@@ -1,0 +1,511 @@
+import React, { useEffect, useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ScrollView,
+  Image,
+  StatusBar,
+  TextInput
+} from 'react-native';
+
+export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL, token }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All Status');
+  const [requests, setRequests] = useState([]);
+  const [viewing, setViewing] = useState(null); // holds full submission object
+
+  async function loadRequests() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // shape items for display
+        setRequests(data.map((r) => ({
+          id: r.id,
+          name: String(r.student_name || r.student_identifier || r.student_user_id),
+          studentId: String(r.student_identifier || r.student_user_id),
+          course: String(r.student_course || ''),
+          timeAgo: new Date(r.created_at).toLocaleString(),
+          status: (r.status || 'submitted').toLowerCase(),
+          requirementTitle: r.requirement_title || 'Requirement'
+        })));
+      } else {
+        setRequests([]);
+      }
+    } catch {
+      setRequests([]);
+    }
+  }
+
+  useEffect(() => { loadRequests(); }, [token]);
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // Implement search logic here
+  };
+
+  const handleFilterChange = () => {
+    // Implement filter dropdown logic here
+    console.log('Filter changed');
+  };
+
+  async function handleViewRequest(requestId) {
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions/${requestId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setViewing(data);
+    } catch {}
+  }
+
+  async function updateStatus(requestId, action) {
+    try {
+      const res = await fetch(`${API_URL}/requirements/submissions/${requestId}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await loadRequests();
+      }
+    } catch {}
+  }
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return '#666';
+      case 'approved':
+        return '#4CAF50';
+      case 'rejected':
+        return '#F44336';
+      default:
+        return '#666';
+    }
+  };
+
+  const filteredRequests = requests.filter(request => {
+    const matchesSearch = request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         request.studentId.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === 'All Status' || request.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
+      
+      {/* Header */}
+      <View style={styles.topBar}>
+        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+      </View>
+      
+      <View style={styles.headerContent}>
+        <Text style={styles.pageTitle}>Department Requests</Text>
+        <Text style={styles.pageSubtitle}>Manage clearance requests from students</Text>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Search and Filter Bar */}
+        <View style={styles.searchFilterContainer}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name/ID"
+              value={searchQuery}
+              onChangeText={handleSearch}
+              placeholderTextColor="#999"
+            />
+          </View>
+          
+          <View style={styles.filterSeparator} />
+          
+          <TouchableOpacity style={styles.filterButton} onPress={handleFilterChange}>
+            <Text style={styles.filterIcon}>🔽</Text>
+            <Text style={styles.filterText}>{filterStatus}</Text>
+            <Text style={styles.filterChevron}>▼</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Request Cards */}
+        <View style={styles.requestsList}>
+          {filteredRequests.map((request) => (
+            <View key={request.id} style={styles.requestCard}>
+              <View style={styles.requestLeft}>
+                <View style={styles.userIcon}>
+                  <Text style={styles.userIconText}>👤</Text>
+                </View>
+                <View style={styles.requestInfo}>
+                  <Text style={styles.requestName}>{request.requirementTitle}</Text>
+                  <Text style={styles.requestDetails}>
+                    {request.name} • {request.course}
+                  </Text>
+                  <Text style={styles.requestTime}>{request.timeAgo}</Text>
+                </View>
+              </View>
+              
+              <View style={styles.requestRight}>
+                <View 
+                  style={[
+                    styles.statusButton, 
+                    { backgroundColor: getStatusColor(request.status) }
+                  ]}
+                >
+                  <Text style={styles.statusText}>{request.status}</Text>
+                </View>
+                
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => handleViewRequest(request.id)}>
+                    <Text style={styles.viewText}>View</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => updateStatus(request.id, 'approve')}>
+                    <Text style={styles.viewText}>Approve</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.viewButton} onPress={() => updateStatus(request.id, 'reject')}>
+                    <Text style={styles.viewText}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('dashboard')}
+        >
+          <Text style={styles.navIcon}>🏠</Text>
+          <Text style={styles.navText}>Dashboard</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('requirements')}
+        >
+          <Text style={styles.navIcon}>📄</Text>
+          <Text style={styles.navText}>Requirements</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.navItem, styles.activeNavItem]} 
+          onPress={() => onNavigate && onNavigate('requests')}
+        >
+          <Text style={styles.navIcon}>👥</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Request</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => onNavigate && onNavigate('profile')}
+        >
+          <Text style={styles.navIcon}>👤</Text>
+          <Text style={styles.navText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* View Submission Modal */}
+      {viewing ? (
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Submission #{String(viewing.id)}</Text>
+            <Text style={{ color: '#555', marginBottom: 8 }}>{(viewing.requirement && viewing.requirement.title) || 'Requirement'}</Text>
+            <Text style={{ color: '#777', marginBottom: 12 }}>Student: {String(viewing.student_user_id)}</Text>
+
+            <Text style={{ fontWeight: '600', marginBottom: 6 }}>Submitted Responses:</Text>
+            <View style={{ gap: 8 }}>
+              {((viewing.requirement && viewing.requirement.required_documents) || []).map((doc, index) => {
+                const isObj = typeof doc === 'object' && doc;
+                const name = isObj ? (doc.name || `Document ${index+1}`) : String(doc);
+                const type = isObj ? (doc.type || 'checkbox') : 'checkbox';
+                const resp = (viewing.responses || {})[index];
+                const isFile = resp && typeof resp === 'object' && (resp.data || resp.name);
+                return (
+                  <View key={index} style={{ padding: 8, backgroundColor: '#f7f7f7', borderRadius: 8 }}>
+                    <Text style={{ marginBottom: 4 }}>{name} {type === 'checkbox' ? '(checkbox)' : '(file)'}</Text>
+                    {type === 'checkbox' ? (
+                      <Text style={{ color: '#1976d2' }}>{resp ? 'Checked' : 'Unchecked'}</Text>
+                    ) : (
+                      isFile ? (
+                        typeof document !== 'undefined' && resp.data ? (
+                          <View>
+                            {(String(resp.type || '').startsWith('image/')) ? (
+                              <img src={`data:${resp.type};base64,${resp.data}`} style={{ maxWidth: '100%', height: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #eee', marginBottom: 8 }} />
+                            ) : (String(resp.type || '') === 'application/pdf') ? (
+                              <iframe src={`data:application/pdf;base64,${resp.data}`} style={{ width: '100%', height: 320, border: '1px solid #eee', borderRadius: 8, marginBottom: 8 }} />
+                            ) : (
+                              <Text style={{ color: '#666', marginBottom: 8 }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                            )}
+                            <a href={`data:${resp.type || 'application/octet-stream'};base64,${resp.data}`} download={resp.name || `file-${index}`}>Download</a>
+                          </View>
+                        ) : (
+                          <Text style={{ color: '#666' }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                        )
+                      ) : (
+                        <Text style={{ color: '#999' }}>No file submitted</Text>
+                      )
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#4CAF50' }]} onPress={async () => { await updateStatus(viewing.id, 'approve'); setViewing(null); }}>
+                  <Text style={[styles.viewText, { color: '#fff' }]}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#F44336' }]} onPress={async () => { await updateStatus(viewing.id, 'reject'); setViewing(null); }}>
+                  <Text style={[styles.viewText, { color: '#fff' }]}>Reject</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={[styles.viewButton, { backgroundColor: '#e0e0e0' }]} onPress={() => setViewing(null)}>
+                <Text style={[styles.viewText, { color: '#333' }]}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1976d2',
+  },
+  topBar: {
+    height: 56,
+    backgroundColor: '#1976d2',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1565c0',
+  },
+  topBarLogo: {
+    width: 80,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  headerContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 30,
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  pageSubtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  searchFilterContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    color: '#666',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+  },
+  filterSeparator: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#e0e0e0',
+    marginHorizontal: 12,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  filterIcon: {
+    fontSize: 16,
+    marginRight: 6,
+    color: '#666',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 4,
+  },
+  filterChevron: {
+    fontSize: 12,
+    color: '#666',
+  },
+  requestsList: {
+    gap: 12,
+  },
+  requestCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  requestLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  userIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  userIconText: {
+    fontSize: 20,
+  },
+  requestInfo: {
+    flex: 1,
+  },
+  requestName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  requestDetails: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
+  },
+  requestTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  requestRight: {
+    alignItems: 'flex-end',
+  },
+  statusButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  viewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  viewIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  viewText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingVertical: 8,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  activeNavItem: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  navIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  navText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  activeNavText: {
+    color: '#1976d2',
+    fontWeight: '500',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+});
