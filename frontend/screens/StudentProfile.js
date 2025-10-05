@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, StatusBar } from 'react-native';
 
 export default function StudentProfile({ user, onLogout }) {
   const initials = (user?.name || '-')
@@ -18,8 +18,9 @@ export default function StudentProfile({ user, onLogout }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
       <View style={styles.topBar}>
-        <Text style={styles.brand}>my SMC</Text>
+        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
       </View>
       <View style={styles.headerBox}>
         <View style={styles.headerTop}>
@@ -74,9 +75,9 @@ export default function StudentProfile({ user, onLogout }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', paddingTop: 8 },
+  container: { flex: 1, backgroundColor: '#f5f5f5', paddingTop: 0 },
   topBar: { height: 56, backgroundColor: '#1976d2', alignItems: 'flex-start', justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1565c0' },
-  brand: { color: '#fff', fontWeight: '800', fontSize: 20 },
+  topBarLogo: { width: 80, height: 30, resizeMode: 'contain' },
   headerBox: {
     backgroundColor: '#fff',
     marginHorizontal: 16,

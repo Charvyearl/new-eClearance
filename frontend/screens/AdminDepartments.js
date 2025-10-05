@@ -30,10 +30,10 @@ export default function AdminDepartments({ styles, departments, loading, onRefre
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Departments</Text>
-        <Button title="Refresh" onPress={onRefresh} />
+      <View style={styles.adminSection}>
+        <Text style={styles.sectionTitle}>Admin Panel - Departments</Text>
       </View>
+      
 
       {editing && (
         <View style={[styles.formRow, { marginHorizontal: 12 }]}>

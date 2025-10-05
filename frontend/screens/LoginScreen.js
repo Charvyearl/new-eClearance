@@ -51,6 +51,7 @@ export default function LoginScreen({ onLogin, onAdminLogin, submitting }) {
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
+        <View style={styles.overlay} />
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
             <Image source={require('../assets/mysmclogo.webp')} style={styles.logoImage} />
@@ -170,10 +171,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   backgroundImageStyle: {
-    opacity: 0.8,
+    opacity: 0.75,
     width: '100%',
     height: '100%',
     resizeMode: 'cover'
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.25)'
   },
   headerSection: {
     paddingTop: 40,

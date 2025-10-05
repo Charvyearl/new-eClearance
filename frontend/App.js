@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Picker,
+  Image,
 } from 'react-native';
 import StudentDashboard from './screens/StudentDashboard';
 import RequirementsScreen from './screens/RequirementsScreen';
@@ -531,12 +532,10 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       {user.role === 'admin' && (
-        <View style={styles.header}>
-          <Text style={styles.title}>eClearance</Text>
-          <View style={styles.userInfo}>
-            <Text style={styles.userText}>{user.name} ({user.role})</Text>
-            <Button title="Logout" onPress={handleLogout} />
-          </View>
+        <View style={{ height: 56, backgroundColor: '#1976d2', justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1565c0', flexDirection: 'row', alignItems: 'center' }}>
+          <Image source={require('./assets/mysmclogo.webp')} style={{ width: 80, height: 30, resizeMode: 'contain' }} />
+          <View style={{ flex: 1 }} />
+          <Button title="Logout" onPress={handleLogout} color="#000" />
         </View>
       )}
       

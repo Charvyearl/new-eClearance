@@ -13,6 +13,7 @@ export default function WelcomeScreen({ onGetStarted }) {
         style={styles.mainContent}
         imageStyle={styles.backgroundImage}
       >
+        <View style={styles.overlay} />
         <View style={styles.logoContainer}>
           <Image source={require('../assets/mysmclogo.webp')} style={styles.logoImage} />
         </View>
@@ -47,10 +48,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   backgroundImage: { 
-    opacity: 0.8,
+    opacity: 0.75,
     width: '100%',
     height: '100%',
     resizeMode: 'cover'
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.25)'
   },
   logoContainer: { marginBottom: 40 },
   logoImage: { width: 120, height: 120, resizeMode: 'contain' },

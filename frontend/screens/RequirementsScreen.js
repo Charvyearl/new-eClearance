@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, StatusBar } from 'react-native';
 
 export default function RequirementsScreen({ API_URL, token, user }) {
   const [requirements, setRequirements] = useState([]);
@@ -151,6 +151,10 @@ export default function RequirementsScreen({ API_URL, token, user }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
+      <View style={{ height: 56, backgroundColor: '#1976d2', justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1565c0' }}>
+        <Image source={require('../assets/mysmclogo.webp')} style={{ width: 80, height: 30, resizeMode: 'contain' }} />
+      </View>
       <View style={styles.pageHeader}>
         <Text style={styles.pageHeaderTitle}>Requirements</Text>
       </View>

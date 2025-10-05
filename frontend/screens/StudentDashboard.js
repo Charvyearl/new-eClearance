@@ -1,17 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image, StatusBar } from 'react-native';
 
 export default function StudentDashboard() {
   return (
     <View style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
       <View style={styles.topBar}>
-        <Text style={styles.brand}>my SMC</Text>
+        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
       </View>
 
-      <View style={styles.headerBlock}>
-        <Text style={styles.headerTitle}>Welcome back, Charvy!</Text>
-        <Text style={styles.headerSub}>Here's your clearance progress</Text>
-      </View>
+      {/* Removed white header block */}
 
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -80,10 +78,8 @@ export default function StudentDashboard() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f5f5f5' },
   topBar: { height: 56, backgroundColor: '#1976d2', justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1565c0' },
-  brand: { color: '#fff', fontWeight: '800', fontSize: 20 },
-  headerBlock: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  headerSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  topBarLogo: { width: 80, height: 30, resizeMode: 'contain' },
+  // removed headerContent styles
 
   card: { backgroundColor: '#fff', marginHorizontal: 16, marginVertical: 8, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#eee' },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
