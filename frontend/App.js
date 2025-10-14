@@ -384,7 +384,7 @@ export default function App() {
     if (user.role === 'student') {
       switch (currentScreen) {
         case 'dashboard':
-          return <StudentDashboard />;
+          return <StudentDashboard API_URL={API_URL} token={token} user={user} />;
         case 'requirements':
           return <RequirementsScreen API_URL={API_URL} token={token} user={user} />;
         case 'profile':
@@ -394,12 +394,12 @@ export default function App() {
             </View>
           );
         default:
-          return <StudentDashboard />;
+          return <StudentDashboard API_URL={API_URL} token={token} user={user} />;
       }
     } else if (user.role === 'department') {
       switch (departmentScreen) {
         case 'dashboard':
-          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
         case 'requirements':
           return <RequirementsManagement user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
         case 'requests':
@@ -407,7 +407,7 @@ export default function App() {
         case 'profile':
           return <DepartmentProfile user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
         default:
-          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} />;
+          return <DepartmentDashboard user={user} onLogout={handleLogout} onNavigate={setDepartmentScreen} API_URL={API_URL} token={token} />;
       }
     } else {
       return (

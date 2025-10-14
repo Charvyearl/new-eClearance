@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,69 +6,159 @@ import {
   StyleSheet, 
   ScrollView,
   Image,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 
-export default function DepartmentDashboard({ user, onLogout, onNavigate }) {
-  // Mock data - replace with real API calls
-  const stats = {
-    totalRequests: 45,
-    pending: 12,
-    completed: 8,
-    overdue: 3
+export default function DepartmentDashboard({ user, onLogout, onNavigate, API_URL, token }) {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pending: 0,
+    completed: 0,
+    overdue: 0
+  });
+  const [recentRequests, setRecentRequests] = useState([]);
+  const [departmentName, setDepartmentName] = useState('Department');
+
+  // Fetch department dashboard data
+  const fetchDashboardData = async () => {
+    if (!token || !user) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch department submissions
+      const submissionsRes = await fetch(`${API_URL}/requirements/submissions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const submissionsData = await submissionsRes.json();
+      const allSubmissions = Array.isArray(submissionsData) ? submissionsData : [];
+      
+      // Calculate statistics
+      const totalRequests = allSubmissions.length;
+      let pending = 0;
+      let completed = 0;
+      let overdue = 0;
+      
+      allSubmissions.forEach(submission => {
+        if (submission.status === 'submitted' || submission.status === 'reviewed') {
+          pending++;
+        } else if (submission.status === 'approved') {
+          completed++;
+        }
+        // For now, we'll consider overdue as submissions older than 7 days that are still pending
+        const submissionDate = new Date(submission.created_at);
+        const daysSinceSubmission = Math.ceil((new Date() - submissionDate) / (1000 * 60 * 60 * 24));
+        if (daysSinceSubmission > 7 && (submission.status === 'submitted' || submission.status === 'reviewed')) {
+          overdue++;
+        }
+      });
+      
+      setStats({
+        totalRequests,
+        pending,
+        completed,
+        overdue
+      });
+      
+      // Get recent requests (last 5 submissions)
+      const recentSubmissions = allSubmissions
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5)
+        .map(submission => {
+          const timeAgo = getTimeAgo(new Date(submission.created_at));
+          return {
+            id: submission.id,
+            name: submission.student_name || 'Unknown Student',
+            studentId: submission.student_id || 'N/A',
+            course: submission.student_course || 'Unknown Course',
+            timeAgo,
+            status: submission.status === 'approved' ? 'Completed' : 
+                   submission.status === 'rejected' ? 'Rejected' : 'Pending'
+          };
+        });
+      
+      setRecentRequests(recentSubmissions);
+      
+      // Set department name (you might want to fetch this from a departments API)
+      setDepartmentName(user.department_name || 'Department');
+      
+    } catch (error) {
+      console.error('Error fetching department dashboard data:', error);
+      // Set empty states on error
+      setStats({ totalRequests: 0, pending: 0, completed: 0, overdue: 0 });
+      setRecentRequests([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentRequests = [
-    {
-      id: 1,
-      name: 'Charvy Cortez',
-      studentId: 'C22-0045',
-      course: 'Information Technology',
-      timeAgo: '1 day ago',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      name: 'Jose Hinaut',
-      studentId: 'C22-0025',
-      course: 'Information Technology',
-      timeAgo: '2 days ago',
-      status: 'Pending'
-    },
-    {
-      id: 3,
-      name: 'Michael Rendado',
-      studentId: 'C22-0020',
-      course: 'Information Technology',
-      timeAgo: '3 days ago',
-      status: 'Pending'
-    }
-  ];
+  // Helper function to calculate time ago
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+  };
+
+  // Refresh data
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, [token, user]);
 
   const handleViewPending = () => {
     // Navigate to pending requests
-    console.log('View pending requests');
+    onNavigate && onNavigate('requests');
   };
 
   const handleViewOverdue = () => {
     // Navigate to overdue requests
-    console.log('View overdue requests');
+    onNavigate && onNavigate('requests');
   };
 
   const handleAddRequirements = () => {
     // Navigate to add requirements page
-    console.log('Add requirements');
+    onNavigate && onNavigate('requirements');
   };
 
   const handleViewAll = () => {
     // Navigate to all requests
-    console.log('View all requests');
+    onNavigate && onNavigate('requests');
   };
 
   const handleRequestPress = (request) => {
     // Navigate to request details
-    console.log('View request:', request.id);
+    onNavigate && onNavigate('requests');
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
+        <View style={styles.topBar}>
+          <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1976d2" />
+          <Text style={styles.loadingText}>Loading dashboard...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -80,10 +170,16 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate }) {
       
       <View style={styles.headerContent}>
         <Text style={styles.dashboardTitle}>Department Dashboard</Text>
-        <Text style={styles.departmentName}>Computer Science Department</Text>
+        <Text style={styles.departmentName}>{departmentName}</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Summary Cards */}
         <View style={styles.summaryCards}>
           <View style={styles.summaryCard}>
@@ -229,6 +325,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 30,
     resizeMode: 'contain',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
   headerContent: {
     backgroundColor: 'white',

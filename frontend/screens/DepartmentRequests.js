@@ -7,7 +7,8 @@ import {
   ScrollView,
   Image,
   StatusBar,
-  TextInput
+  TextInput,
+  Modal
 } from 'react-native';
 
 export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL, token }) {
@@ -15,6 +16,15 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
   const [filterStatus, setFilterStatus] = useState('All Status');
   const [requests, setRequests] = useState([]);
   const [viewing, setViewing] = useState(null); // holds full submission object
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  const filterOptions = [
+    'All Status',
+    'submitted',
+    'approved',
+    'rejected',
+    'overdue'
+  ];
 
   async function loadRequests() {
     if (!token) return;
@@ -29,6 +39,7 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
           studentId: String(r.student_identifier || r.student_user_id),
           course: String(r.student_course || ''),
           timeAgo: new Date(r.created_at).toLocaleString(),
+          createdAt: new Date(r.created_at), // Store original date for overdue calculation
           status: (r.status || 'submitted').toLowerCase(),
           requirementTitle: r.requirement_title || 'Requirement'
         })));
@@ -44,12 +55,16 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    // Implement search logic here
   };
 
-  const handleFilterChange = () => {
-    // Implement filter dropdown logic here
-    console.log('Filter changed');
+  const handleFilterChange = (status) => {
+    setFilterStatus(status);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFilterStatus('All Status');
   };
 
   async function handleViewRequest(requestId) {
@@ -73,7 +88,16 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
     } catch {}
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, createdAt) => {
+    // Check if overdue (older than 7 days and still pending)
+    const daysSinceSubmission = Math.ceil((new Date() - createdAt) / (1000 * 60 * 60 * 24));
+    const isPending = status.toLowerCase() === 'submitted';
+    const isOverdue = daysSinceSubmission > 7 && isPending;
+    
+    if (isOverdue) {
+      return '#FF5722'; // Orange-red for overdue
+    }
+    
     switch (status.toLowerCase()) {
       case 'pending':
         return '#666';
@@ -87,9 +111,26 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
   };
 
   const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         request.studentId.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'All Status' || request.status === filterStatus;
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = searchQuery === '' || 
+                         request.name.toLowerCase().includes(searchLower) ||
+                         request.studentId.toLowerCase().includes(searchLower) ||
+                         request.course.toLowerCase().includes(searchLower) ||
+                         request.requirementTitle.toLowerCase().includes(searchLower);
+    
+    let matchesFilter = true;
+    
+    if (filterStatus === 'All Status') {
+      matchesFilter = true;
+    } else if (filterStatus === 'overdue') {
+      // Check if request is overdue (older than 7 days and still pending)
+      const daysSinceSubmission = Math.ceil((new Date() - request.createdAt) / (1000 * 60 * 60 * 24));
+      const isPending = request.status.toLowerCase() === 'submitted';
+      matchesFilter = daysSinceSubmission > 7 && isPending;
+    } else {
+      matchesFilter = request.status.toLowerCase() === filterStatus.toLowerCase();
+    }
+    
     return matchesSearch && matchesFilter;
   });
 
@@ -114,20 +155,37 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search by name/ID"
+              placeholder="Search by name, ID, course, or requirement"
               value={searchQuery}
               onChangeText={handleSearch}
               placeholderTextColor="#999"
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                <Text style={styles.clearButtonText}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
           
           <View style={styles.filterSeparator} />
           
-          <TouchableOpacity style={styles.filterButton} onPress={handleFilterChange}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
             <Text style={styles.filterIcon}>🔽</Text>
             <Text style={styles.filterText}>{filterStatus}</Text>
             <Text style={styles.filterChevron}>▼</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Results Count and Clear Filters */}
+        <View style={styles.resultsHeader}>
+          <Text style={styles.resultsText}>
+            {filteredRequests.length} of {requests.length} requests
+          </Text>
+          {(searchQuery.length > 0 || filterStatus !== 'All Status') && (
+            <TouchableOpacity onPress={clearFilters} style={styles.clearFiltersButton}>
+              <Text style={styles.clearFiltersText}>Clear Filters</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Request Cards */}
@@ -151,10 +209,17 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
                 <View 
                   style={[
                     styles.statusButton, 
-                    { backgroundColor: getStatusColor(request.status) }
+                    { backgroundColor: getStatusColor(request.status, request.createdAt) }
                   ]}
                 >
-                  <Text style={styles.statusText}>{request.status}</Text>
+                  <Text style={styles.statusText}>
+                    {(() => {
+                      const daysSinceSubmission = Math.ceil((new Date() - request.createdAt) / (1000 * 60 * 60 * 24));
+                      const isPending = request.status.toLowerCase() === 'submitted';
+                      const isOverdue = daysSinceSubmission > 7 && isPending;
+                      return isOverdue ? 'Overdue' : request.status;
+                    })()}
+                  </Text>
                 </View>
                 
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -208,6 +273,46 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
           <Text style={styles.navText}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.filterModalCard}>
+            <Text style={styles.filterModalTitle}>Filter by Status</Text>
+            {filterOptions.map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.filterOption,
+                  filterStatus === option && styles.filterOptionSelected
+                ]}
+                onPress={() => handleFilterChange(option)}
+              >
+                <Text style={[
+                  styles.filterOptionText,
+                  filterStatus === option && styles.filterOptionTextSelected
+                ]}>
+                  {option}
+                </Text>
+                {filterStatus === option && (
+                  <Text style={styles.filterCheckmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.filterCloseButton}
+              onPress={() => setShowFilterModal(false)}
+            >
+              <Text style={styles.filterCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* View Submission Modal */}
       {viewing ? (
@@ -507,5 +612,86 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
+  },
+  // New filter styles
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  clearButtonText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  resultsText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  clearFiltersButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  clearFiltersText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  filterModalCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    maxHeight: '70%',
+  },
+  filterModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  filterOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  filterOptionSelected: {
+    backgroundColor: '#e3f2fd',
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  filterOptionTextSelected: {
+    color: '#1976d2',
+    fontWeight: '500',
+  },
+  filterCheckmark: {
+    fontSize: 16,
+    color: '#1976d2',
+    fontWeight: 'bold',
+  },
+  filterCloseButton: {
+    backgroundColor: '#1976d2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  filterCloseText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
