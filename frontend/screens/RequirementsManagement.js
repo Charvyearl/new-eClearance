@@ -8,15 +8,18 @@ import {
   Image,
   StatusBar,
   Modal,
-  TextInput
+  TextInput,
+  Platform
 } from 'react-native';
-import { Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function RequirementsManagement({ user, onLogout, onNavigate, API_URL, token }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [reqTitle, setReqTitle] = useState('');
   const [reqDescription, setReqDescription] = useState('');
   const [reqDueDate, setReqDueDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerDate, setDatePickerDate] = useState(new Date());
   // Each required document: { name: string, type: 'checkbox' | 'file' }
   const [documents, setDocuments] = useState([{ name: '', type: 'checkbox' }]);
   const [requirements, setRequirements] = useState([]);
@@ -46,6 +49,18 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
 
   const handleAddRequirements = () => {
     setIsAddOpen(true);
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios'); // Keep picker open on iOS
+    if (selectedDate) {
+      setDatePickerDate(selectedDate);
+      // Format date as YYYY-MM-DD
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      setReqDueDate(`${year}-${month}-${day}`);
+    }
   };
 
   const handleEditRequirement = (requirementId) => {
@@ -307,12 +322,27 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
                 />
               </View>
             ) : (
-              <TextInput
-                style={styles.input}
-                placeholder="Due Date (YYYY-MM-DD)"
-                value={reqDueDate}
-                onChangeText={setReqDueDate}
-              />
+              <View>
+                <Text style={styles.webLabel}>Due Date</Text>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.datePickerText}>
+                    {reqDueDate || 'Select Due Date'}
+                  </Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={datePickerDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleDateChange}
+                    minimumDate={new Date()}
+                  />
+                )}
+              </View>
             )}
 
             <Text style={styles.requiredDocsLabel}>Required Documents</Text>
@@ -597,6 +627,26 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 12,
     marginBottom: 4,
+  },
+  datePickerButton: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginTop: 6,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  datePickerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  calendarIcon: {
+    fontSize: 18,
   },
   // Modal styles
   modalBackdrop: {

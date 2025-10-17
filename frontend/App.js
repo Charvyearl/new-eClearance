@@ -66,7 +66,7 @@ export default function App() {
     }
     
     // For mobile devices (Expo Go), use local network IP
-    return 'http://192.168.1.7:3000';
+    return 'http://10.16.20.83:3000';
   }, []);
 
   // Load persisted session on first mount (web reload)

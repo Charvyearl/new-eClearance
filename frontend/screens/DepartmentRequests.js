@@ -337,19 +337,45 @@ export default function DepartmentRequests({ user, onLogout, onNavigate, API_URL
                       <Text style={{ color: '#1976d2' }}>{resp ? 'Checked' : 'Unchecked'}</Text>
                     ) : (
                       isFile ? (
-                        typeof document !== 'undefined' && resp.data ? (
+                        resp.data ? (
                           <View>
                             {(String(resp.type || '').startsWith('image/')) ? (
-                              <img src={`data:${resp.type};base64,${resp.data}`} style={{ maxWidth: '100%', height: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #eee', marginBottom: 8 }} />
+                              typeof document !== 'undefined' ? (
+                                <img src={`data:${resp.type};base64,${resp.data}`} style={{ maxWidth: '100%', height: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #eee', marginBottom: 8 }} />
+                              ) : (
+                                <Image 
+                                  source={{ uri: `data:${resp.type};base64,${resp.data}` }}
+                                  style={{ width: '100%', height: 220, borderRadius: 8, marginBottom: 8 }}
+                                  resizeMode="contain"
+                                />
+                              )
                             ) : (String(resp.type || '') === 'application/pdf') ? (
-                              <iframe src={`data:application/pdf;base64,${resp.data}`} style={{ width: '100%', height: 320, border: '1px solid #eee', borderRadius: 8, marginBottom: 8 }} />
+                              typeof document !== 'undefined' ? (
+                                <iframe src={`data:application/pdf;base64,${resp.data}`} style={{ width: '100%', height: 320, border: '1px solid #eee', borderRadius: 8, marginBottom: 8 }} />
+                              ) : (
+                                <View style={{ padding: 12, backgroundColor: '#fff3e0', borderRadius: 8, marginBottom: 8 }}>
+                                  <Text style={{ color: '#e65100', fontSize: 14 }}>📄 PDF Document: {resp.name || 'document.pdf'}</Text>
+                                  <Text style={{ color: '#666', fontSize: 12, marginTop: 4 }}>PDF preview not available on mobile</Text>
+                                </View>
+                              )
                             ) : (
-                              <Text style={{ color: '#666', marginBottom: 8 }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                              <Text style={{ color: '#666', marginBottom: 8 }}>{(resp && (resp.name || resp.type || 'file')) || 'file'}</Text>
                             )}
-                            <a href={`data:${resp.type || 'application/octet-stream'};base64,${resp.data}`} download={resp.name || `file-${index}`}>Download</a>
+                            {typeof document !== 'undefined' && (
+                              <a href={`data:${resp.type || 'application/octet-stream'};base64,${resp.data}`} download={resp.name || `file-${index}`}>Download</a>
+                            )}
+                          </View>
+                        ) : resp.uri ? (
+                          <View>
+                            <Image 
+                              source={{ uri: resp.uri }}
+                              style={{ width: '100%', height: 220, borderRadius: 8, marginBottom: 8 }}
+                              resizeMode="contain"
+                            />
+                            <Text style={{ color: '#666', fontSize: 12 }}>{resp.name || 'File'}</Text>
                           </View>
                         ) : (
-                          <Text style={{ color: '#666' }}>{(resp && (resp.type || 'file')) || 'file'}</Text>
+                          <Text style={{ color: '#666' }}>{(resp && (resp.name || resp.type || 'file')) || 'file'}</Text>
                         )
                       ) : (
                         <Text style={{ color: '#999' }}>No file submitted</Text>
