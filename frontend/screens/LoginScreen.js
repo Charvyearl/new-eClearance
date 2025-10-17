@@ -168,7 +168,6 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     flex: 1,
-    paddingHorizontal: 32,
   },
   backgroundImageStyle: {
     opacity: 0.75,

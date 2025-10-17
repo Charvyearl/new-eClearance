@@ -1,15 +1,15 @@
-# Cashless Canteen Backend
+# eClearance Backend API
 
-A Node.js backend API for a cashless canteen payment system using RFID technology.
+A Node.js backend API for an electronic clearance system for educational institutions.
 
 ## Features
 
-- **User Management**: Student, staff, and admin user types with RFID card authentication
-- **Wallet System**: Secure balance management with transaction logging
-- **Menu Management**: Dynamic menu with categories and items
-- **Transaction Processing**: Real-time payment processing and history
+- **User Management**: Student, department, and admin user types with role-based access
+- **Requirements Management**: Department-specific clearance requirements
+- **Document Submission**: Students can submit required documents with file uploads
+- **Approval Workflow**: Department users can review and approve/reject submissions
 - **Authentication**: JWT-based authentication with role-based access control
-- **Real-time Logging**: Comprehensive transaction and activity logging
+- **Real-time Status**: Track clearance status and progress
 
 ## Technology Stack
 
@@ -17,36 +17,34 @@ A Node.js backend API for a cashless canteen payment system using RFID technolog
 - **Framework**: Express.js
 - **Database**: MySQL
 - **Authentication**: JWT (JSON Web Tokens)
-- **Validation**: Joi
-- **Security**: Helmet, CORS, Rate Limiting
+- **File Handling**: Base64 encoding for document storage
+- **Security**: CORS, JWT validation
 
 ## Project Structure
 
 ```
 backend/
-├── config/
-│   ├── config.js          # Application configuration
-│   └── database.js        # Database connection setup
-├── database/
-│   └── schema.sql         # Database schema and initial data
-├── middleware/
-│   └── auth.js           # Authentication middleware
-├── models/
-│   ├── User.js           # User model and operations
-│   ├── Wallet.js         # Wallet model and operations
-│   ├── Menu.js           # Menu and menu items models
-│   └── Transaction.js    # Transaction model and operations
-├── routes/
-│   ├── auth.js           # Authentication routes
-│   ├── wallets.js        # Wallet management routes
-│   ├── transactions.js   # Transaction routes
-│   └── menu.js           # Menu management routes
-├── utils/
-│   ├── jwt.js            # JWT utility functions
-│   └── validation.js     # Input validation schemas
-├── server.js             # Main server file
-├── package.json          # Dependencies and scripts
-└── README.md            # This file
+├── src/
+│   ├── middleware/
+│   │   └── auth.js           # Authentication middleware
+│   ├── repositories/
+│   │   ├── usersRepository.js          # User operations
+│   │   ├── departmentsRepository.js    # Department operations
+│   │   ├── requirementsRepository.js   # Requirements operations
+│   │   └── submissionsRepository.js    # Submissions operations
+│   ├── routes/
+│   │   ├── authRoutes.js        # Authentication routes
+│   │   ├── usersRoutes.js       # User management routes
+│   │   ├── departmentsRoutes.js # Department routes
+│   │   ├── requirementsRoutes.js # Requirements routes
+│   │   └── meRoutes.js          # Current user routes
+│   ├── db.js                    # Database connection
+│   ├── server.js                # Main server file
+│   ├── createAdmin.js           # Admin creation script
+│   └── testDb.js                # Database test script
+├── package.json                 # Dependencies and scripts
+├── .env.example                 # Environment variables template
+└── README.md                    # This file
 ```
 
 ## Installation
@@ -71,121 +69,118 @@ backend/
    ```env
    DB_HOST=localhost
    DB_PORT=3306
-   DB_NAME=cashless_canteen
+   DB_NAME=eclearance
    DB_USER=root
    DB_PASSWORD=your_password
    JWT_SECRET=your_super_secret_jwt_key_here
    PORT=3000
    ```
 
-4. **Set up MySQL database**
+4. **Start the server**
    ```bash
-   mysql -u root -p < database/schema.sql
+   npm start
    ```
 
-5. **Start the server**
+   The server will automatically create the required database tables.
+
+5. **Create an admin user**
    ```bash
-   # Development
-   npm run dev
-   
-   # Production
-   npm start
+   npm run create-admin
    ```
 
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register new user (admin only)
-- `POST /api/auth/login` - Login with RFID card
-- `GET /api/auth/verify` - Verify JWT token
-- `GET /api/auth/profile` - Get user profile
+- `POST /auth/register` - Register new user (admin only)
+- `POST /auth/login` - Login with email and password
+- `GET /me` - Get current user profile
 
-### Wallets
-- `GET /api/wallets/balance` - Get wallet balance
-- `GET /api/wallets/summary` - Get wallet summary
-- `GET /api/wallets/transactions` - Get transaction history
-- `POST /api/wallets/top-up` - Top up wallet (staff/admin)
-- `POST /api/wallets/transfer` - Transfer money to another user
-- `GET /api/wallets/rfid/:rfid_card_id` - Get wallet by RFID (staff)
-- `POST /api/wallets/payment` - Process payment (staff)
+### Users
+- `GET /users` - Get all users (admin only)
+- `GET /users/:id` - Get user by ID
+- `POST /users` - Create user (admin only)
+- `PUT /users/:id` - Update user (admin only)
+- `DELETE /users/:id` - Delete user (admin only)
 
-### Menu
-- `GET /api/menu` - Get full menu
-- `GET /api/menu/items` - Get menu items with filters
-- `GET /api/menu/search` - Search menu items
-- `GET /api/menu/categories` - Get menu categories
-- `GET /api/menu/items/:id` - Get single menu item
-- `POST /api/menu/categories` - Create category (staff/admin)
-- `PUT /api/menu/categories/:id` - Update category (staff/admin)
-- `DELETE /api/menu/categories/:id` - Delete category (staff/admin)
-- `POST /api/menu/items` - Create menu item (staff/admin)
-- `PUT /api/menu/items/:id` - Update menu item (staff/admin)
-- `PATCH /api/menu/items/:id/availability` - Toggle availability (staff/admin)
-- `DELETE /api/menu/items/:id` - Delete menu item (staff/admin)
+### Departments
+- `GET /departments` - Get all departments
+- `GET /departments/:id` - Get department by ID
+- `POST /departments` - Create department (admin only)
+- `PUT /departments/:id` - Update department (admin only)
+- `DELETE /departments/:id` - Delete department (admin only)
 
-### Transactions
-- `GET /api/transactions/my-transactions` - Get user's transactions
-- `GET /api/transactions` - Get all transactions (admin)
-- `GET /api/transactions/:id` - Get transaction by ID
-- `GET /api/transactions/stats/overview` - Get transaction statistics (admin)
-- `GET /api/transactions/stats/daily/:date` - Get daily summary (admin)
-- `PATCH /api/transactions/:id/status` - Update transaction status (admin)
-- `GET /api/transactions/transaction/:transaction_id` - Get transaction by transaction ID
+### Requirements
+- `GET /requirements` - Get requirements (filtered by role)
+- `POST /requirements` - Create requirement (department/admin)
+- `PUT /requirements/:id` - Update requirement (department/admin)
+- `DELETE /requirements/:id` - Delete requirement (department/admin)
+- `POST /requirements/:id/submit` - Submit requirement (student)
+- `DELETE /requirements/:id/submit` - Unsubmit requirement (student)
+- `GET /requirements/submissions/mine` - Get my submissions (student)
+- `GET /requirements/submissions` - Get department submissions (department/admin)
+- `GET /requirements/submissions/:id` - Get submission details
+- `POST /requirements/submissions/:id/approve` - Approve submission (department/admin)
+- `POST /requirements/submissions/:id/reject` - Reject submission (department/admin)
 
-## User Types
+## User Roles
 
 ### Student
-- View menu and check balance
-- Make payments using RFID
-- View transaction history
-- Transfer money to other users
+- View all clearance requirements
+- Submit required documents (checkbox and file upload)
+- Track submission status
+- View clearance progress
 
-### Staff
-- All student permissions
-- Process payments for students
-- Manage menu items and categories
-- Top up student wallets
+### Department
+- Create and manage department-specific requirements
+- Review student submissions
+- Approve or reject clearance requests
+- View department dashboard with statistics
 
 ### Admin
-- All staff permissions
-- View all transactions and statistics
-- Manage users and system settings
-- Generate reports
+- All department permissions
+- Manage users and departments
+- View all submissions across departments
+- System-wide administration
 
 ## Database Schema
 
 The system uses the following main tables:
-- `users` - User information and RFID cards
-- `wallets` - User wallet balances
-- `transactions` - All financial transactions
-- `menu_categories` - Menu categories
-- `menu_items` - Individual menu items
-- `orders` - Order records
-- `order_items` - Order line items
-- `reservations` - Food reservations
-- `transaction_types` - Transaction type definitions
-- `system_settings` - System configuration
+- `users` - User information (students, department users, admins)
+- `departments` - Department information
+- `requirements` - Clearance requirements
+- `submissions` - Student submissions
+
+## File Upload Support
+
+The system supports file uploads for clearance requirements:
+- **Supported formats**: Images (JPG, PNG) and PDFs
+- **File size limit**: 2MB per file
+- **Storage**: Base64 encoded in JSON responses field
+- **Types**: File upload or checkbox confirmation
 
 ## Security Features
 
 - JWT-based authentication
-- Role-based access control
-- Input validation with Joi
-- Rate limiting
-- CORS protection
-- Helmet security headers
+- Role-based access control (student, department, admin)
+- Password hashing with bcryptjs
 - SQL injection prevention with parameterized queries
+- CORS protection
 
 ## Development
 
-### Running in Development Mode
+### Running the Server
 ```bash
-npm run dev
+npm start
 ```
 
-### Running Tests
+### Testing Database Connection
 ```bash
-npm test
+npm run db:test
+```
+
+### Creating Admin User
+```bash
+npm run create-admin
 ```
 
 ### Environment Variables
@@ -193,11 +188,10 @@ npm test
 - `PORT` - Server port (default: 3000)
 - `DB_HOST` - Database host
 - `DB_PORT` - Database port
-- `DB_NAME` - Database name
+- `DB_NAME` - Database name (eclearance)
 - `DB_USER` - Database username
 - `DB_PASSWORD` - Database password
 - `JWT_SECRET` - JWT signing secret
-- `JWT_EXPIRES_IN` - JWT expiration time
 
 ## Health Check
 
@@ -206,25 +200,27 @@ The server provides a health check endpoint:
 GET /health
 ```
 
-Returns server status, uptime, and environment information.
+Returns: `{"status":"ok"}`
 
 ## Error Handling
 
 All API endpoints return consistent error responses:
 ```json
 {
-  "success": false,
-  "message": "Error description",
-  "errors": [] // Validation errors (if applicable)
+  "message": "Error description"
 }
 ```
+
+## File Upload Guide
+
+See `FILE_UPLOAD_GUIDE.md` for detailed information on implementing and using file upload features.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Test thoroughly
 5. Submit a pull request
 
 ## License

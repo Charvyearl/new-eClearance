@@ -55,8 +55,18 @@ export default function App() {
   
 
   const API_URL = useMemo(() => {
-    // Change to your machine's LAN IP when testing on a real device, e.g. http://192.168.1.10:3000
-    return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    // Use environment variable if available, otherwise auto-detect
+    if (process.env.EXPO_PUBLIC_API_URL) {
+      return process.env.EXPO_PUBLIC_API_URL;
+    }
+    
+    // For web, use localhost
+    if (typeof window !== 'undefined' && window.location) {
+      return 'http://localhost:3000';
+    }
+    
+    // For mobile devices (Expo Go), use local network IP
+    return 'http://192.168.1.7:3000';
   }, []);
 
   // Load persisted session on first mount (web reload)

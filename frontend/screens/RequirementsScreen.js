@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, StatusBar } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, StatusBar, Alert } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function RequirementsScreen({ API_URL, token, user }) {
   const [requirements, setRequirements] = useState([]);
@@ -88,6 +89,39 @@ export default function RequirementsScreen({ API_URL, token, user }) {
         reader.readAsDataURL(file);
       } catch (e) { reject(e); }
     });
+  }
+
+  async function pickDocument(requirementId, docIndex) {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        
+        // Check file size (limit to 2MB)
+        const maxBytes = 2 * 1024 * 1024;
+        if (file.size && file.size > maxBytes) {
+          Alert.alert('File Too Large', 'Please upload a file under 2 MB.');
+          return;
+        }
+
+        // For React Native, we'll store the file URI and metadata
+        // The actual file upload to server would need to be handled differently
+        setResponse(requirementId, docIndex, {
+          name: file.name,
+          type: file.mimeType || 'application/octet-stream',
+          size: file.size || 0,
+          uri: file.uri,
+          isLocalFile: true
+        });
+      }
+    } catch (error) {
+      console.error('Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document');
+    }
   }
 
   async function submitRequirement(requirementId) {
@@ -207,7 +241,7 @@ export default function RequirementsScreen({ API_URL, token, user }) {
                             <Text style={{ color: '#1976d2', opacity: isLocked ? 0.5 : 1 }}>{responses[item.id]?.[index] ? 'Checked' : 'Check'}</Text>
                           </TouchableOpacity>
                         ) : (
-                          // Web: read file -> base64 JSON payload; Native: fallback simple text note
+                          // File upload: Web uses input, React Native uses DocumentPicker
                           (typeof document !== 'undefined' && typeof FileReader !== 'undefined' ? (
                             <input
                               type="file"
@@ -233,7 +267,38 @@ export default function RequirementsScreen({ API_URL, token, user }) {
                               }}
                             />
                           ) : (
-                            <TextInput style={styles.input} placeholder="Enter note (native)" editable={!isLocked} value={responses[item.id]?.[index] || ''} onChangeText={(t) => { if (isLocked) return; setResponse(item.id, index, t); }} />
+                            <View style={styles.fileUploadContainer}>
+                              {responses[item.id]?.[index] ? (
+                                <View style={styles.fileInfoContainer}>
+                                  <Text style={styles.fileName}>
+                                    📄 {responses[item.id][index].name || 'Selected file'}
+                                  </Text>
+                                  <Text style={styles.fileSize}>
+                                    {responses[item.id][index].size ? 
+                                      `${Math.round(responses[item.id][index].size / 1024)} KB` : 
+                                      'Unknown size'
+                                    }
+                                  </Text>
+                                  <TouchableOpacity 
+                                    style={styles.removeFileBtn}
+                                    onPress={() => setResponse(item.id, index, null)}
+                                    disabled={isLocked}
+                                  >
+                                    <Text style={styles.removeFileText}>Remove</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              ) : (
+                                <TouchableOpacity 
+                                  style={[styles.fileUploadBtn, isLocked && styles.fileUploadBtnDisabled]}
+                                  onPress={() => pickDocument(item.id, index)}
+                                  disabled={isLocked}
+                                >
+                                  <Text style={[styles.fileUploadText, isLocked && styles.fileUploadTextDisabled]}>
+                                    📁 Choose File
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
                           ))
                         )}
                       </View>
@@ -295,6 +360,62 @@ const styles = StyleSheet.create({
   primaryBtnText: { color: '#fff', fontWeight: '600' },
   secondaryBtn: { backgroundColor: '#E0E0E0', paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 4 },
   secondaryBtnText: { color: '#333', fontWeight: '600' },
+  
+  // File upload styles
+  fileUploadContainer: { marginTop: 8 },
+  fileUploadBtn: { 
+    backgroundColor: '#f0f8ff', 
+    borderWidth: 1, 
+    borderColor: '#1976d2', 
+    borderStyle: 'dashed', 
+    paddingVertical: 12, 
+    paddingHorizontal: 16, 
+    borderRadius: 8, 
+    alignItems: 'center' 
+  },
+  fileUploadBtnDisabled: { 
+    backgroundColor: '#f5f5f5', 
+    borderColor: '#ccc', 
+    opacity: 0.5 
+  },
+  fileUploadText: { 
+    color: '#1976d2', 
+    fontSize: 14, 
+    fontWeight: '500' 
+  },
+  fileUploadTextDisabled: { 
+    color: '#999' 
+  },
+  fileInfoContainer: { 
+    backgroundColor: '#f8f9fa', 
+    borderWidth: 1, 
+    borderColor: '#e9ecef', 
+    borderRadius: 8, 
+    padding: 12 
+  },
+  fileName: { 
+    fontSize: 14, 
+    fontWeight: '500', 
+    color: '#333', 
+    marginBottom: 4 
+  },
+  fileSize: { 
+    fontSize: 12, 
+    color: '#666', 
+    marginBottom: 8 
+  },
+  removeFileBtn: { 
+    backgroundColor: '#dc3545', 
+    paddingVertical: 6, 
+    paddingHorizontal: 12, 
+    borderRadius: 4, 
+    alignSelf: 'flex-start' 
+  },
+  removeFileText: { 
+    color: '#fff', 
+    fontSize: 12, 
+    fontWeight: '500' 
+  },
 });
 
 
