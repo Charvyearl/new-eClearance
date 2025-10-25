@@ -271,38 +271,46 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate, API_UR
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={[styles.navItem, styles.navItemActive]} 
-          onPress={() => onNavigate && onNavigate('dashboard')}
-        >
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={[styles.navText, styles.navTextActive]}>Dashboard</Text>
-        </TouchableOpacity>
+      <View style={styles.navContainer}>
+        <View style={styles.bottomNav}>
+          <TouchableOpacity 
+            style={[styles.navItem, styles.navItemActive]} 
+            onPress={() => onNavigate && onNavigate('dashboard')}
+          >
+            <Text style={styles.navIcon}>🏠</Text>
+            <Text style={[styles.navText, styles.navTextActive]}>Dashboard</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => onNavigate && onNavigate('requirements')}
+          >
+            <Text style={styles.navIcon}>📄</Text>
+            <Text style={styles.navText}>Requirements</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => onNavigate && onNavigate('requests')}
+          >
+            <Text style={styles.navIcon}>👥</Text>
+            <Text style={styles.navText}>Request</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => onNavigate && onNavigate('profile')}
+          >
+            <Text style={styles.navIcon}>👤</Text>
+            <Text style={styles.navText}>Profile</Text>
+          </TouchableOpacity>
+        </View>
         
-        <TouchableOpacity 
-          style={styles.navItem} 
-          onPress={() => onNavigate && onNavigate('requirements')}
-        >
-          <Text style={styles.navIcon}>📄</Text>
-          <Text style={styles.navText}>Requirements</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem} 
-          onPress={() => onNavigate && onNavigate('requests')}
-        >
-          <Text style={styles.navIcon}>👥</Text>
-          <Text style={styles.navText}>Request</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem} 
-          onPress={() => onNavigate && onNavigate('profile')}
-        >
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.copyrightIcon}>©</Text>
+          <Text style={styles.copyrightText}>Copyright 2025 Developed by Cortez Charvy</Text>
+        </View>
       </View>
     </View>
   );
@@ -501,11 +509,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  bottomNav: {
-    flexDirection: 'row',
+  navContainer: {
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+  },
+  bottomNav: {
+    flexDirection: 'row',
     paddingVertical: 8,
   },
   navItem: {
@@ -529,5 +539,25 @@ const styles = StyleSheet.create({
   navTextActive: {
     color: '#1976d2',
     fontWeight: '500',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  copyrightIcon: {
+    color: '#6b7280',
+    fontSize: 12,
+    marginRight: 4,
+  },
+  copyrightText: {
+    color: '#6b7280',
+    fontSize: 10,
+    textAlign: 'center',
   },
 });

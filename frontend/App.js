@@ -306,7 +306,7 @@ export default function App() {
           if (data && data.user) {
             setUser((prev) => ({ ...prev, ...data.user }));
             // Fallback: if student-specific fields are missing, fetch full record
-            if (!data.user.student_id || !data.user.course || !data.user.year_level) {
+            if (!data.user.student_id || !data.user.course || !data.user.year_level || !data.user.phone) {
               try {
                 const res2 = await fetch(`${API_URL}/users/${data.user.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const full = await res2.json();
@@ -326,7 +326,7 @@ export default function App() {
   }, [token]);
 
   if (showWelcome) {
-    return <WelcomeScreen onGetStarted={() => setShowWelcome(false)} />;
+    return <WelcomeScreen onGetStarted={() => setShowWelcome(false)} onAdminLogin={() => setAuthMode('admin-login')} />;
   }
 
   if (!user) {

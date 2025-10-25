@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, ImageBackground } from 'react-native';
 
-export default function WelcomeScreen({ onGetStarted }) {
+export default function WelcomeScreen({ onGetStarted, onAdminLogin }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+        <TouchableOpacity style={styles.adminButton} onPress={onAdminLogin}>
+          <Text style={styles.adminButtonText}>Admin Login</Text>
+        </TouchableOpacity>
       </View>
       
       <ImageBackground 
@@ -25,6 +28,12 @@ export default function WelcomeScreen({ onGetStarted }) {
         <TouchableOpacity style={styles.getStartedBtn} onPress={onGetStarted}>
           <Text style={styles.getStartedText}>Get Started</Text>
         </TouchableOpacity>
+        
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.copyrightIcon}>©</Text>
+          <Text style={styles.copyrightText}>Copyright 2025 Developed by Cortez Charvy</Text>
+        </View>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -38,9 +47,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     paddingHorizontal: 16, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#1565c0' 
+    borderBottomColor: '#1565c0',
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   topBarLogo: { width: 80, height: 30, resizeMode: 'contain' },
+  adminButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginLeft: 'auto'
+  },
+  adminButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600'
+  },
   mainContent: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -85,5 +108,25 @@ const styles = StyleSheet.create({
     color: '#1976d2', 
     fontSize: 18, 
     fontWeight: '600' 
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  copyrightIcon: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    marginRight: 4,
+  },
+  copyrightText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

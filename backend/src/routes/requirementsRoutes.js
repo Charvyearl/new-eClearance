@@ -133,7 +133,6 @@ router.post('/', authMiddleware, async (req, res) => {
 	}
 });
 
-module.exports = router;
 // Student submission for a requirement
 router.post('/:id/submit', authMiddleware, async (req, res) => {
 	try {
@@ -142,8 +141,20 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 		if (!Number.isFinite(requirementId) || requirementId <= 0) return res.status(400).json({ message: 'Invalid requirement id' });
 		const { responses } = req.body || {};
 		if (!responses || typeof responses !== 'object') return res.status(400).json({ message: 'responses object is required' });
-		const created = await submissions.createSubmission({ requirement_id: requirementId, student_user_id: req.user.id, responses });
-		res.status(201).json(created);
+		
+		// Check if there's already a submission for this requirement and student
+		const existingSubmission = await submissions.getSubmissionByRequirementAndStudent(requirementId, req.user.id);
+		
+		let result;
+		if (existingSubmission) {
+			// Update existing submission (resubmission)
+			result = await submissions.updateSubmission(existingSubmission.id, responses, 'submitted');
+		} else {
+			// Create new submission
+			result = await submissions.createSubmission({ requirement_id: requirementId, student_user_id: req.user.id, responses });
+		}
+		
+		res.status(201).json(result);
 	} catch (e) {
 		console.error('Submit requirement error:', e);
 		res.status(500).json({ message: 'Failed to submit requirement' });
@@ -252,4 +263,4 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 	}
 });
 
-
+module.exports = router;

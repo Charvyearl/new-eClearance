@@ -66,17 +66,22 @@ export default function StudentDashboard({ API_URL, token, user }) {
       setSubmissions(studentSubmissions);
       
       // Generate recent activity (last 5 submissions)
+      // Filter out submissions that don't have corresponding requirements
       const recentSubmissions = studentSubmissions
+        .filter(sub => {
+          const requirement = allRequirements.find(req => req.id === sub.requirement_id);
+          return requirement; // Only include submissions with valid requirements
+        })
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 5)
         .map(sub => {
           const requirement = allRequirements.find(req => req.id === sub.requirement_id);
           return {
             id: sub.id,
-            title: requirement ? requirement.title : 'Unknown Requirement',
+            title: requirement.title,
             status: sub.status,
             date: sub.created_at,
-            department: requirement ? requirement.department_name : 'Unknown Department'
+            department: requirement.department_name
           };
         });
       

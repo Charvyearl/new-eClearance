@@ -21,7 +21,7 @@ async function createSubmission({ requirement_id, student_user_id, responses, st
 		'INSERT INTO submissions (requirement_id, student_user_id, responses, status) VALUES (?, ?, ?, ?)',
 		[requirement_id, student_user_id, JSON.stringify(responses || {}), status]
 	);
-	return getSubmissionById(result.insertId);
+	return await getSubmissionById(result.insertId);
 }
 
 async function getSubmissionById(id) {
@@ -55,9 +55,37 @@ async function updateSubmissionStatus(id, status) {
 	return getSubmissionById(id);
 }
 
+async function getSubmissionByRequirementAndStudent(requirement_id, student_user_id) {
+	const rows = await query(
+		'SELECT * FROM submissions WHERE requirement_id = ? AND student_user_id = ? ORDER BY created_at DESC LIMIT 1',
+		[requirement_id, student_user_id]
+	);
+	const row = rows[0];
+	if (!row) return null;
+	return { ...row, responses: safeParse(row.responses, {}) };
+}
+
+async function updateSubmission(id, responses, status = 'submitted') {
+	await query(
+		'UPDATE submissions SET responses = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+		[JSON.stringify(responses || {}), status, id]
+	);
+	return getSubmissionById(id);
+}
+
 function safeParse(s, fb) { try { return s ? JSON.parse(s) : fb; } catch { return fb; } }
 
-module.exports = { ensureSubmissionsTable, createSubmission, getSubmissionById, listSubmissionsByStudent, listSubmissionsByDepartment, updateSubmissionStatus };
+module.exports = { 
+	ensureSubmissionsTable, 
+	createSubmission, 
+	getSubmissionById, 
+	listSubmissionsByStudent, 
+	listSubmissionsByDepartment, 
+	updateSubmissionStatus,
+	getSubmissionByRequirementAndStudent,
+	updateSubmission,
+	deleteSubmissionByRequirementAndStudent
+};
 
 async function deleteSubmissionByRequirementAndStudent(requirement_id, student_user_id) {
 	await query('DELETE FROM submissions WHERE requirement_id = ? AND student_user_id = ?', [requirement_id, student_user_id]);

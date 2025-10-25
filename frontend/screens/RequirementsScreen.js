@@ -24,7 +24,12 @@ export default function RequirementsScreen({ API_URL, token, user }) {
         const subRes = await fetch(`${API_URL}/requirements/submissions/mine`, { headers: { 'Authorization': `Bearer ${token}` } });
         const subData = await subRes.json();
         if (Array.isArray(subData)) {
-          subData.forEach((s) => { submissionsMap[s.requirement_id] = s.status || 'submitted'; });
+          // Since backend returns submissions ordered by ID DESC, the first occurrence of each requirement_id is the latest
+          subData.forEach((s) => { 
+            if (!submissionsMap[s.requirement_id]) { // Only take the first (latest) submission for each requirement
+              submissionsMap[s.requirement_id] = s.status || 'submitted'; 
+            }
+          });
         }
       } catch {}
 
@@ -138,10 +143,16 @@ export default function RequirementsScreen({ API_URL, token, user }) {
         return;
       }
       alert('Submitted');
-      // Mark this requirement as pending in the UI and clear draft responses
+      
+      // Update local state immediately
+      setMySubmissions((prev) => ({ ...prev, [requirementId]: 'submitted' }));
       setRequirements((prev) => prev.map((r) => r.id === requirementId ? { ...r, status: 'pending' } : r));
       setResponses((prev) => ({ ...prev, [requirementId]: {} }));
-      setMySubmissions((prev) => ({ ...prev, [requirementId]: 'submitted' }));
+      
+      // Reload data from server to ensure consistency
+      setTimeout(async () => {
+        await loadRequirementsAndSubmissions();
+      }, 500);
     } catch (e) {
       alert('Failed to submit');
     }
@@ -164,6 +175,9 @@ export default function RequirementsScreen({ API_URL, token, user }) {
         delete copy[requirementId];
         return copy;
       });
+      
+      // Reload requirements and submissions to get the latest data
+      await loadRequirementsAndSubmissions();
     } catch (e) {
       alert('Failed to unsubmit');
     }

@@ -44,6 +44,9 @@ export default function LoginScreen({ onLogin, onAdminLogin, submitting }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+        <TouchableOpacity style={styles.adminButton} onPress={handleAdminLogin}>
+          <Text style={styles.adminButtonText}>Admin Login</Text>
+        </TouchableOpacity>
       </View>
       
       <ImageBackground 
@@ -61,88 +64,92 @@ export default function LoginScreen({ onLogin, onAdminLogin, submitting }) {
           <Text style={styles.appSubtitle}>Digital Clearance Processing</Text>
         </View>
 
-        {/* Login Card */}
-        <View style={styles.loginCard}>
-          {/* Tab Selection */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity 
-              style={[styles.tab, loginType === 'student' && styles.activeTab]}
-              onPress={() => setLoginType('student')}
-            >
-              <Text style={styles.tabIcon}>🎓</Text>
-              <Text style={[styles.tabText, loginType === 'student' && styles.activeTabText]}>
-                Student
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.tab, loginType === 'department' && styles.activeTab]}
-              onPress={() => setLoginType('department')}
-            >
-              <Text style={styles.tabIcon}>🏢</Text>
-              <Text style={[styles.tabText, loginType === 'department' && styles.activeTabText]}>
-                Department
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>
-              {loginType === 'student' ? 'Student Login' : 'Department Login'}
-            </Text>
-
-            {loginType === 'student' ? (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Student ID</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your student ID"
-                  value={studentId}
-                  onChangeText={setStudentId}
-                  autoCapitalize="none"
-                  keyboardType="default"
-                />
-              </View>
-            ) : (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-            )}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+        {/* Main Content Container */}
+        <View style={styles.mainContentContainer}>
+          {/* Login Card */}
+          <View style={styles.loginCard}>
+            {/* Tab Selection */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity 
+                style={[styles.tab, loginType === 'student' && styles.activeTab]}
+                onPress={() => setLoginType('student')}
+              >
+                <Text style={styles.tabIcon}>🎓</Text>
+                <Text style={[styles.tabText, loginType === 'student' && styles.activeTabText]}>
+                  Student
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.tab, loginType === 'department' && styles.activeTab]}
+                onPress={() => setLoginType('department')}
+              >
+                <Text style={styles.tabIcon}>🏢</Text>
+                <Text style={[styles.tabText, loginType === 'department' && styles.activeTabText]}>
+                  Department
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity 
-              style={styles.signInButton}
-              onPress={handleLogin}
-              disabled={submitting}
-            >
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            </TouchableOpacity>
+            {/* Login Form */}
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>
+                {loginType === 'student' ? 'Student Login' : 'Department Login'}
+              </Text>
+
+              {loginType === 'student' ? (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Student ID</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your student ID"
+                    value={studentId}
+                    onChangeText={setStudentId}
+                    autoCapitalize="none"
+                    keyboardType="default"
+                  />
+                </View>
+              ) : (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
+              )}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.signInButton}
+                onPress={handleLogin}
+                disabled={submitting}
+              >
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.copyrightIcon}>©</Text>
+            <Text style={styles.copyrightText}>Copyright 2025 Developed by Cortez Charvy</Text>
           </View>
         </View>
-
-        {/* Admin Login Link */}
-        <TouchableOpacity style={styles.adminLink} onPress={handleAdminLogin}>
-          <Text style={styles.adminLinkText}>Admin login here</Text>
-        </TouchableOpacity>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -159,12 +166,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     paddingHorizontal: 16, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#1565c0' 
+    borderBottomColor: '#1565c0',
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   topBarLogo: { 
     width: 80, 
     height: 30, 
     resizeMode: 'contain' 
+  },
+  adminButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginLeft: 'auto'
+  },
+  adminButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600'
   },
   backgroundImage: {
     flex: 1,
@@ -209,11 +230,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
+  mainContentContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 20,
+  },
   loginCard: {
     backgroundColor: 'white',
     marginHorizontal: 20,
     marginTop: 'auto',
-    marginBottom: 20,
     borderRadius: 20,
     padding: 20,
     shadowColor: '#000',
@@ -306,13 +331,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  adminLink: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
-  adminLinkText: {
-    color: '#000',
+  copyrightIcon: {
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 14,
-    textDecorationLine: 'underline',
+    marginRight: 4,
+  },
+  copyrightText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
