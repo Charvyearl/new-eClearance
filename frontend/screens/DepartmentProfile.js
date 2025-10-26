@@ -10,12 +10,11 @@ import {
 } from 'react-native';
 
 export default function DepartmentProfile({ user, onLogout, onNavigate }) {
-  // Mock data - replace with real API calls
+  // Use real user data
   const departmentInfo = {
-    name: 'Computer Science Department',
-    head: 'Maam Babba',
-    email: 'maambob@my.smciligan.edu.ph',
-    phone: '08760622504'
+    name: user?.department_name || 'Department',
+    head: user?.name || 'N/A',
+    email: user?.email || 'N/A'
   };
 
   const handleSignOut = () => {
@@ -51,15 +50,26 @@ export default function DepartmentProfile({ user, onLogout, onNavigate }) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Department Information Card */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>Department Information</Text>
+          <Text style={styles.infoCardTitle}>Account Information</Text>
           
-          {/* Department Head */}
+          {/* Department */}
+          <View style={styles.infoItem}>
+            <View style={styles.infoIconContainer}>
+              <Text style={styles.infoIcon}>🏢</Text>
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Department</Text>
+              <Text style={styles.infoValue}>{departmentInfo.name}</Text>
+            </View>
+          </View>
+          
+          {/* Account Name */}
           <View style={styles.infoItem}>
             <View style={styles.infoIconContainer}>
               <Text style={styles.infoIcon}>👤</Text>
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Department Head</Text>
+              <Text style={styles.infoLabel}>Name</Text>
               <Text style={styles.infoValue}>{departmentInfo.head}</Text>
             </View>
           </View>
@@ -72,17 +82,6 @@ export default function DepartmentProfile({ user, onLogout, onNavigate }) {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
               <Text style={styles.infoValue}>{departmentInfo.email}</Text>
-            </View>
-          </View>
-          
-          {/* Phone */}
-          <View style={styles.infoItem}>
-            <View style={styles.infoIconContainer}>
-              <Text style={styles.infoIcon}>📞</Text>
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>{departmentInfo.phone}</Text>
             </View>
           </View>
         </View>

@@ -153,8 +153,11 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate, API_UR
           <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976d2" />
-          <Text style={styles.loadingText}>Loading dashboard...</Text>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#1976d2" />
+            <Text style={styles.loadingText}>Loading department dashboard...</Text>
+            <Text style={styles.loadingSubtext}>Please wait while we fetch your data</Text>
+          </View>
         </View>
       </View>
     );
@@ -163,14 +166,28 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate, API_UR
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
-      {/* Header */}
+      
+      {/* Enhanced Header */}
       <View style={styles.topBar}>
-        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+        <View style={styles.topBarContent}>
+          <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerTitle}>Department Portal</Text>
+            <Text style={styles.headerSubtitle}>Clearance Management</Text>
+          </View>
+        </View>
       </View>
       
-      <View style={styles.headerContent}>
-        <Text style={styles.dashboardTitle}>Department Dashboard</Text>
-        <Text style={styles.departmentName}>{departmentName}</Text>
+      {/* Welcome Section */}
+      <View style={styles.welcomeSection}>
+        <View style={styles.welcomeContent}>
+          <Text style={styles.welcomeTitle}>Welcome back!</Text>
+          <Text style={styles.departmentName}>{departmentName}</Text>
+          <Text style={styles.welcomeSubtitle}>Manage clearance requests efficiently</Text>
+        </View>
+        <View style={styles.welcomeIcon}>
+          <Text style={styles.welcomeIconText}>🏢</Text>
+        </View>
       </View>
 
       <ScrollView 
@@ -180,93 +197,153 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate, API_UR
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Summary Cards */}
-        <View style={styles.summaryCards}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryIcon}>👥</Text>
-            <Text style={styles.summaryNumber}>{stats.totalRequests}</Text>
-            <Text style={styles.summaryLabel}>Total Requests</Text>
+        {/* Statistics Dashboard */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statsHeader}>
+            <Text style={styles.statsTitle}>📊 Request Statistics</Text>
+            <Text style={styles.statsSubtitle}>Overview of clearance requests</Text>
           </View>
           
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryIcon}>⏰</Text>
-            <Text style={styles.summaryNumber}>{stats.pending}</Text>
-            <Text style={styles.summaryLabel}>Pending</Text>
-          </View>
-          
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryIcon}>✅</Text>
-            <Text style={styles.summaryNumber}>{stats.completed}</Text>
-            <Text style={styles.summaryLabel}>Completed</Text>
-          </View>
-          
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryIcon}>⚠️</Text>
-            <Text style={styles.summaryNumber}>{stats.overdue}</Text>
-            <Text style={styles.summaryLabel}>Overdue</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Text style={styles.statIcon}>👥</Text>
+              </View>
+              <Text style={styles.statNumber}>{stats.totalRequests}</Text>
+              <Text style={styles.statLabel}>Total Requests</Text>
+              <View style={styles.statTrend}>
+                <Text style={styles.statTrendText}>All time</Text>
+              </View>
+            </View>
+            
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Text style={styles.statIcon}>⏳</Text>
+              </View>
+              <Text style={styles.statNumber}>{stats.pending}</Text>
+              <Text style={styles.statLabel}>Pending</Text>
+              <View style={styles.statTrend}>
+                <Text style={styles.statTrendText}>Needs attention</Text>
+              </View>
+            </View>
+            
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Text style={styles.statIcon}>✅</Text>
+              </View>
+              <Text style={styles.statNumber}>{stats.completed}</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+              <View style={styles.statTrend}>
+                <Text style={styles.statTrendText}>Successfully processed</Text>
+              </View>
+            </View>
+            
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Text style={styles.statIcon}>⚠️</Text>
+              </View>
+              <Text style={styles.statNumber}>{stats.overdue}</Text>
+              <Text style={styles.statLabel}>Overdue</Text>
+              <View style={styles.statTrend}>
+                <Text style={styles.statTrendText}>Requires immediate action</Text>
+              </View>
+            </View>
           </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.quickActionsContainer}>
+          <View style={styles.quickActionsHeader}>
+            <Text style={styles.quickActionsTitle}>⚡ Quick Actions</Text>
+            <Text style={styles.quickActionsSubtitle}>Common tasks and shortcuts</Text>
+          </View>
           
-          <TouchableOpacity style={styles.actionItem} onPress={handleViewPending}>
-            <View style={styles.actionLeft}>
-              <Text style={styles.actionIcon}>⏰</Text>
-              <Text style={styles.actionText}>Process pending clearance requests</Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{stats.pending}</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionItem} onPress={handleViewOverdue}>
-            <View style={styles.actionLeft}>
-              <Text style={styles.actionIcon}>⚠️</Text>
-              <Text style={styles.actionText}>Check Overdue requests</Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{stats.overdue}</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionItem} onPress={handleAddRequirements}>
-            <View style={styles.actionLeft}>
-              <Text style={styles.actionIcon}>📄</Text>
-              <Text style={styles.actionText}>Redirect to Add requirements page</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity style={styles.quickActionCard} onPress={handleViewPending}>
+              <View style={styles.quickActionIconContainer}>
+                <Text style={styles.quickActionIcon}>⏳</Text>
+              </View>
+              <Text style={styles.quickActionTitle}>Process Pending</Text>
+              <Text style={styles.quickActionSubtitle}>Review pending requests</Text>
+              <View style={styles.quickActionBadge}>
+                <Text style={styles.quickActionBadgeText}>{stats.pending}</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.quickActionCard} onPress={handleViewOverdue}>
+              <View style={styles.quickActionIconContainer}>
+                <Text style={styles.quickActionIcon}>⚠️</Text>
+              </View>
+              <Text style={styles.quickActionTitle}>Check Overdue</Text>
+              <Text style={styles.quickActionSubtitle}>Urgent requests</Text>
+              <View style={styles.quickActionBadge}>
+                <Text style={styles.quickActionBadgeText}>{stats.overdue}</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.quickActionCard} onPress={handleAddRequirements}>
+              <View style={styles.quickActionIconContainer}>
+                <Text style={styles.quickActionIcon}>📄</Text>
+              </View>
+              <Text style={styles.quickActionTitle}>Add Requirements</Text>
+              <Text style={styles.quickActionSubtitle}>Create new requirements</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.quickActionCard} onPress={handleViewAll}>
+              <View style={styles.quickActionIconContainer}>
+                <Text style={styles.quickActionIcon}>📋</Text>
+              </View>
+              <Text style={styles.quickActionTitle}>View All Requests</Text>
+              <Text style={styles.quickActionSubtitle}>Complete request list</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Recent Requests */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Requests</Text>
-            <TouchableOpacity onPress={handleViewAll}>
-              <Text style={styles.viewAllText}>View All</Text>
+        <View style={styles.recentRequestsContainer}>
+          <View style={styles.recentRequestsHeader}>
+            <View style={styles.recentRequestsTitleContainer}>
+              <Text style={styles.recentRequestsTitle}>🕒 Recent Requests</Text>
+              <Text style={styles.recentRequestsSubtitle}>Latest clearance submissions</Text>
+            </View>
+            <TouchableOpacity style={styles.viewAllBtn} onPress={handleViewAll}>
+              <Text style={styles.viewAllBtnText}>View All</Text>
             </TouchableOpacity>
           </View>
           
-          {recentRequests.map((request) => (
-            <TouchableOpacity 
-              key={request.id} 
-              style={styles.requestCard} 
-              onPress={() => handleRequestPress(request)}
-            >
-              <View style={styles.requestLeft}>
-                <Text style={styles.userIcon}>👤</Text>
-                <View style={styles.requestInfo}>
-                  <Text style={styles.requestName}>{request.name}</Text>
-                  <Text style={styles.requestDetails}>{request.studentId} • {request.course}</Text>
-                  <Text style={styles.requestTime}>{request.timeAgo}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.statusButton}>
-                <Text style={styles.statusText}>{request.status}</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
+          {recentRequests.length > 0 ? (
+            <View style={styles.requestsList}>
+              {recentRequests.map((request) => (
+                <TouchableOpacity 
+                  key={request.id} 
+                  style={styles.requestCard} 
+                  onPress={() => handleRequestPress(request)}
+                >
+                  <View style={styles.requestAvatar}>
+                    <Text style={styles.requestAvatarText}>👤</Text>
+                  </View>
+                  <View style={styles.requestContent}>
+                    <Text style={styles.requestName}>{request.name}</Text>
+                    <Text style={styles.requestDetails}>{request.studentId} • {request.course}</Text>
+                    <Text style={styles.requestTime}>{request.timeAgo}</Text>
+                  </View>
+                  <View style={[
+                    styles.statusBadge,
+                    request.status === 'Completed' ? styles.statusCompleted :
+                    request.status === 'Rejected' ? styles.statusRejected : styles.statusPending
+                  ]}>
+                    <Text style={styles.statusBadgeText}>{request.status}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>📭</Text>
+              <Text style={styles.emptyStateTitle}>No recent requests</Text>
+              <Text style={styles.emptyStateSubtitle}>New clearance requests will appear here</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -317,140 +394,300 @@ export default function DepartmentDashboard({ user, onLogout, onNavigate, API_UR
 }
 
 const styles = StyleSheet.create({
+  // Screen styles
   container: {
     flex: 1,
-    backgroundColor: '#1976d2',
+    backgroundColor: '#f8f9fa',
   },
+  
+  // Header styles
   topBar: {
-    height: 56,
     backgroundColor: '#1976d2',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1565c0',
+    paddingTop: 8,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  topBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   topBarLogo: {
     width: 80,
     height: 30,
     resizeMode: 'contain',
   },
+  headerInfo: {
+    alignItems: 'flex-end',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#ffffff',
+    opacity: 0.9,
+  },
+
+  // Welcome section
+  welcomeSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 20,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  welcomeContent: {
+    flex: 1,
+  },
+  welcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  departmentName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  welcomeIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e3f2fd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  welcomeIconText: {
+    fontSize: 28,
+  },
+
+  // Content styles
+  content: {
+    flex: 1,
+    paddingTop: 16,
+  },
+
+  // Loading styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
+  },
+  loadingCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  headerContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    paddingTop: 40,
-    paddingBottom: 30,
-
-  },
-  dashboardTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 5,
-  },
-  departmentName: {
-    fontSize: 16,
-    color: '#999',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  summaryCards: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  summaryIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  summaryNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1976d2',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
+    marginTop: 16,
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    textAlign: 'center',
   },
-  viewAllText: {
+  loadingSubtext: {
+    marginTop: 8,
     fontSize: 14,
-    color: '#1976d2',
-    fontWeight: '500',
+    color: '#666',
+    textAlign: 'center',
   },
-  actionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+
+  // Statistics styles
+  statsContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  actionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  statsHeader: {
+    marginBottom: 20,
   },
-  actionIcon: {
+  statsTitle: {
     fontSize: 20,
-    marginRight: 12,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
   },
-  actionText: {
+  statsSubtitle: {
     fontSize: 14,
-    color: '#333',
-    flex: 1,
+    color: '#666',
   },
-  badge: {
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '45%',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  statIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#e3f2fd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statIcon: {
+    fontSize: 24,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  statTrend: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statTrendText: {
+    fontSize: 10,
+    color: '#666',
+    textAlign: 'center',
+  },
+
+  // Quick actions styles
+  quickActionsContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  quickActionsHeader: {
+    marginBottom: 20,
+  },
+  quickActionsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  quickActionsSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickActionCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '45%',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    position: 'relative',
+  },
+  quickActionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e3f2fd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  quickActionIcon: {
+    fontSize: 20,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  quickActionSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  quickActionBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
     backgroundColor: '#ff4444',
     borderRadius: 12,
     paddingHorizontal: 8,
@@ -458,36 +695,97 @@ const styles = StyleSheet.create({
     minWidth: 24,
     alignItems: 'center',
   },
-  badgeText: {
-    color: 'white',
+  quickActionBadgeText: {
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
-  requestCard: {
+
+  // Recent requests styles
+  recentRequestsContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recentRequestsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginBottom: 20,
   },
-  requestLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  recentRequestsTitleContainer: {
     flex: 1,
   },
-  userIcon: {
+  recentRequestsTitle: {
     fontSize: 20,
-    marginRight: 12,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
   },
-  requestInfo: {
+  recentRequestsSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  viewAllBtn: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  viewAllBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1976d2',
+  },
+  requestsList: {
+    gap: 12,
+  },
+  requestCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+  },
+  requestAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  requestAvatarText: {
+    fontSize: 18,
+  },
+  requestContent: {
     flex: 1,
   },
   requestName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#333',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   requestDetails: {
     fontSize: 12,
@@ -498,19 +796,50 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
   },
-  statusButton: {
-    backgroundColor: '#ffa726',
+  statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 12,
   },
-  statusText: {
-    color: 'white',
+  statusBadgeText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#ffffff',
   },
+  statusCompleted: {
+    backgroundColor: '#2e7d32',
+  },
+  statusRejected: {
+    backgroundColor: '#c62828',
+  },
+  statusPending: {
+    backgroundColor: '#ef6c00',
+  },
+
+  // Empty state
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+
+  // Navigation styles
   navContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },

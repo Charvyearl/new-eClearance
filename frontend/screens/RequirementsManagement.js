@@ -9,7 +9,8 @@ import {
   StatusBar,
   Modal,
   TextInput,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -163,66 +164,109 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1976d2" translucent={false} />
       
-      {/* Header */}
+      {/* Enhanced Header */}
       <View style={styles.topBar}>
-        <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+        <View style={styles.topBarContent}>
+          <Image source={require('../assets/mysmclogo.webp')} style={styles.topBarLogo} />
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerTitle}>Requirements Management</Text>
+            <Text style={styles.headerSubtitle}>Create and manage requirements</Text>
+          </View>
+        </View>
       </View>
       
-      <View style={styles.headerContent}>
-        <View style={styles.titleSection}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.pageTitle}>Requirements Management</Text>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddRequirements}>
-              <Text style={styles.addButtonText}>+ Add Requirements</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.pageSubtitle}>Create and manage clearance requirements</Text>
+      {/* Welcome Section */}
+      <View style={styles.welcomeSection}>
+        <View style={styles.welcomeContent}>
+          <Text style={styles.welcomeTitle}>Requirements Management</Text>
+          <Text style={styles.welcomeSubtitle}>Create and manage clearance requirements</Text>
         </View>
+        <TouchableOpacity style={styles.addRequirementBtn} onPress={handleAddRequirements}>
+          <Text style={styles.addRequirementIcon}>➕</Text>
+          <Text style={styles.addRequirementText}>Add Requirement</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <Text style={{ textAlign: 'center', color: '#666' }}>Loading requirements...</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#1976d2" />
+            <Text style={styles.loadingText}>Loading requirements...</Text>
+          </View>
         ) : requirements.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#666' }}>No requirements yet</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>📄</Text>
+            <Text style={styles.emptyStateTitle}>No requirements yet</Text>
+            <Text style={styles.emptyStateSubtitle}>Create your first requirement to get started</Text>
+            <TouchableOpacity style={styles.emptyStateBtn} onPress={handleAddRequirements}>
+              <Text style={styles.emptyStateBtnText}>Create First Requirement</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          requirements.map((requirement) => (
-            <View key={requirement.id} style={styles.requirementCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.requirementTitle}>{requirement.title}</Text>
-                <View style={styles.cardActions}>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => handleEditRequirement(requirement.id)}>
-                    <Text style={styles.actionIcon}>✏️</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteRequirement(requirement.id)}>
-                    <Text style={styles.actionIcon}>🗑️</Text>
-                  </TouchableOpacity>
+          <View style={styles.requirementsList}>
+            {requirements.map((requirement) => (
+              <View key={requirement.id} style={styles.requirementCard}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleContainer}>
+                    <Text style={styles.requirementIcon}>📋</Text>
+                    <Text style={styles.requirementTitle}>{requirement.title}</Text>
+                  </View>
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity style={styles.editBtn} onPress={() => handleEditRequirement(requirement.id)}>
+                      <Text style={styles.editBtnIcon}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteRequirement(requirement.id)}>
+                      <Text style={styles.deleteBtnIcon}>🗑️</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.cardContent}>
+                  <Text style={styles.requirementDescription}>{requirement.description || 'No description provided'}</Text>
+
+                  <View style={styles.requirementMeta}>
+                    <View style={styles.metaItem}>
+                      <Text style={styles.metaIcon}>📅</Text>
+                      <Text style={styles.metaText}>Due: {requirement.due_date || 'No due date'}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <Text style={styles.metaIcon}>📄</Text>
+                      <Text style={styles.metaText}>{(requirement.required_documents || []).length} documents</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.documentsSection}>
+                    <Text style={styles.requiredDocsLabel}>Required Documents:</Text>
+                    <View style={styles.documentTags}>
+                      {(requirement.required_documents || []).map((doc, index) => {
+                        const label = typeof doc === 'string' ? doc : (doc && doc.name) ? doc.name : 'Document';
+                        const type = typeof doc === 'object' && doc.type === 'file' ? 'file' : 'checkbox';
+                        return (
+                          <View key={index} style={styles.documentTag}>
+                            <Text style={styles.documentIcon}>
+                              {type === 'file' ? '📁' : '☑️'}
+                            </Text>
+                            <Text style={styles.documentText}>{label}</Text>
+                            <View style={styles.documentTypeBadge}>
+                              <Text style={styles.documentTypeText}>
+                                {type === 'file' ? 'File' : 'Checkbox'}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.createdDate}>
+                      Created: {new Date(requirement.created_at).toLocaleDateString()}
+                    </Text>
+                  </View>
                 </View>
               </View>
-
-              <Text style={styles.requirementDescription}>{requirement.description || 'No description'}</Text>
-
-              <View style={styles.dueDateContainer}>
-                <Text style={styles.dueDateIcon}>📅</Text>
-                <Text style={styles.dueDateText}>Due: {requirement.due_date || '—'}</Text>
-              </View>
-
-              <Text style={styles.requiredDocsLabel}>Required Documents:</Text>
-              <View style={styles.documentTags}>
-                {(requirement.required_documents || []).map((doc, index) => {
-                  const label = typeof doc === 'string' ? doc : (doc && doc.name) ? `${doc.name} • ${doc.type || 'text'}` : 'Document';
-                  return (
-                    <View key={index} style={styles.documentTag}>
-                      <Text style={styles.documentIcon}>📄</Text>
-                      <Text style={styles.documentText}>{label}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-
-              <Text style={styles.createdDate}>Created: {String(requirement.created_at).slice(0, 10)}</Text>
-            </View>
-          ))
+            ))}
+          </View>
         )}
       </ScrollView>
 
@@ -291,47 +335,50 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
       <Modal visible={isAddOpen} animationType="slide" transparent onRequestClose={() => setIsAddOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add Requirement</Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: '90%' }}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {editingId ? '✏️ Edit Requirement' : '➕ Add Requirement'}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  {editingId ? 'Update requirement details' : 'Create a new clearance requirement'}
+                </Text>
+              </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Requirement Title"
-              value={reqTitle}
-              onChangeText={setReqTitle}
-            />
+              <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>📋 Requirement Title</Text>
+              <TextInput
+                style={styles.modernInput}
+                placeholder="Enter requirement title"
+                placeholderTextColor="#9e9e9e"
+                value={reqTitle}
+                onChangeText={setReqTitle}
+              />
+            </View>
 
-            <TextInput
-              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-              placeholder="Description"
-              multiline
-              value={reqDescription}
-              onChangeText={setReqDescription}
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>📝 Description</Text>
+              <TextInput
+                style={[styles.modernInput, styles.textAreaInput]}
+                placeholder="Enter requirement description"
+                placeholderTextColor="#9e9e9e"
+                multiline
+                numberOfLines={4}
+                value={reqDescription}
+                onChangeText={setReqDescription}
+              />
+            </View>
 
-            {Platform.OS === 'web' ? (
-              <View style={styles.webInputWrapper}>
-                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <Text style={styles.webLabel}>Due Date</Text>
-                {/* Using native input for web to get type=date */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>📅 Due Date</Text>
+              {Platform.OS === 'web' ? (
                 <input
                   type="date"
                   value={reqDueDate}
                   onChange={(e) => setReqDueDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: 10,
-                    borderRadius: 8,
-                    border: '1px solid #e0e0e0',
-                    backgroundColor: '#f7f7f7',
-                    marginTop: 6,
-                    marginBottom: 16,
-                    display: 'block',
-                  }}
+                  style={styles.webDateInput}
                 />
-              </View>
-            ) : (
-              <View>
-                <Text style={styles.webLabel}>Due Date</Text>
+              ) : (
                 <TouchableOpacity
                   style={styles.datePickerButton}
                   onPress={() => setShowDatePicker(true)}
@@ -341,88 +388,107 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
                   </Text>
                   <Text style={styles.calendarIcon}>📅</Text>
                 </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={datePickerDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleDateChange}
-                    minimumDate={new Date()}
-                  />
-                )}
+              )}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={datePickerDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+            </View>
+
+            <View style={styles.documentsSection}>
+              <View style={styles.documentsHeader}>
+                <Text style={styles.documentsTitle}>📄 Required Documents</Text>
+                <Text style={styles.documentsSubtitle}>Define what documents students need to submit</Text>
               </View>
-            )}
-
-            <Text style={styles.requiredDocsLabel}>Required Documents</Text>
-            {documents.map((doc, idx) => (
-              <View key={idx} style={{ marginBottom: 10 }}>
-                <View style={styles.docRow}>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    placeholder={`Required Document ${idx + 1}`}
-                    value={doc.name}
-                    onChangeText={(v) => handleChangeDocumentName(v, idx)}
-                  />
-                  {documents.length > 1 ? (
-                    <TouchableOpacity style={styles.removeDocBtn} onPress={() => handleRemoveDocumentField(idx)}>
-                      <Text style={styles.removeDocText}>×</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-                {/* Document type selector */}
-                {Platform.OS === 'web' ? (
-                  <View style={{ marginTop: 6 }}>
-                    <Text style={styles.webLabel}>Type</Text>
-                    <select
-                      value={doc.type}
-                      onChange={(e) => handleChangeDocumentType(e.target.value, idx)}
-                      style={{
-                        width: '100%',
-                        padding: 10,
-                        borderRadius: 8,
-                        border: '1px solid #e0e0e0',
-                        backgroundColor: '#f7f7f7',
-                        marginTop: 6,
-                      }}
-                    >
-                      <option value="checkbox">Checkbox</option>
-                      <option value="file">Upload File</option>
-                    </select>
+              <View style={styles.documentsList}>
+                {documents.map((doc, idx) => (
+                  <View key={idx} style={styles.documentItem}>
+                    <View style={styles.documentItemHeader}>
+                      <Text style={styles.documentItemTitle}>Document {idx + 1}</Text>
+                      {documents.length > 1 && (
+                        <TouchableOpacity style={styles.removeDocBtn} onPress={() => handleRemoveDocumentField(idx)}>
+                          <Text style={styles.removeDocText}>🗑️</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    
+                    <View style={styles.documentInputRow}>
+                      <TextInput
+                        style={styles.documentNameInput}
+                        placeholder="Enter document name"
+                        placeholderTextColor="#9e9e9e"
+                        value={doc.name}
+                        onChangeText={(v) => handleChangeDocumentName(v, idx)}
+                      />
+                    </View>
+                    
+                    <View style={styles.documentTypeSelector}>
+                      <Text style={styles.documentTypeLabel}>Type:</Text>
+                      {Platform.OS === 'web' ? (
+                        <select
+                          value={doc.type}
+                          onChange={(e) => handleChangeDocumentType(e.target.value, idx)}
+                          style={styles.webSelect}
+                        >
+                          <option value="checkbox">☑️ Checkbox</option>
+                          <option value="file">📁 File Upload</option>
+                        </select>
+                      ) : (
+                        <View style={styles.typeButtons}>
+                          {[
+                            { value: 'checkbox', label: '☑️ Checkbox', icon: '☑️' },
+                            { value: 'file', label: '📁 File Upload', icon: '📁' }
+                          ].map((type) => (
+                            <TouchableOpacity
+                              key={type.value}
+                              onPress={() => handleChangeDocumentType(type.value, idx)}
+                              style={[
+                                styles.typeButton,
+                                doc.type === type.value && styles.typeButtonActive
+                              ]}
+                            >
+                              <Text style={styles.typeButtonIcon}>{type.icon}</Text>
+                              <Text style={[
+                                styles.typeButtonText,
+                                doc.type === type.value && styles.typeButtonTextActive
+                              ]}>
+                                {type.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
                   </View>
-                ) : (
-                  <View style={{ flexDirection: 'row', marginTop: 6 }}>
-                    {['checkbox','file'].map((t) => (
-                      <TouchableOpacity
-                        key={t}
-                        onPress={() => handleChangeDocumentType(t, idx)}
-                        style={{
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderWidth: 1,
-                          borderColor: '#90caf9',
-                          borderRadius: 6,
-                          marginRight: 8,
-                          backgroundColor: doc.type === t ? '#e3f2fd' : 'transparent'
-                        }}
-                      >
-                        <Text style={{ color: '#1976d2', fontSize: 12 }}>{t === 'checkbox' ? 'Checkbox' : 'File'}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                ))}
               </View>
-            ))}
 
-            <TouchableOpacity style={styles.secondaryBtn} onPress={handleAddDocumentField}>
-              <Text style={styles.secondaryBtnText}>Add Document</Text>
-            </TouchableOpacity>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
-              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#e0e0e0' }]} onPress={() => { setIsAddOpen(false); resetAddForm(); }}>
-                <Text style={[styles.modalBtnText, { color: '#333' }]}>Cancel</Text>
+              <TouchableOpacity style={styles.addDocumentBtn} onPress={handleAddDocumentField}>
+                <Text style={styles.addDocumentIcon}>➕</Text>
+                <Text style={styles.addDocumentText}>Add Another Document</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#1976d2', marginLeft: 8 }]} onPress={handleSaveRequirement}>
-                <Text style={styles.modalBtnText}>Save</Text>
+            </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.cancelBtn} 
+                onPress={() => { setIsAddOpen(false); resetAddForm(); }}
+              >
+                <Text style={styles.cancelBtnText}>❌ Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.saveBtn} 
+                onPress={handleSaveRequirement}
+              >
+                <Text style={styles.saveBtnText}>
+                  {editingId ? '💾 Update Requirement' : '🚀 Create Requirement'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -433,171 +499,602 @@ export default function RequirementsManagement({ user, onLogout, onNavigate, API
 }
 
 const styles = StyleSheet.create({
+  // Screen styles
   container: {
     flex: 1,
-    backgroundColor: '#1976d2',
+    backgroundColor: '#f8f9fa',
   },
+  
+  // Header styles
   topBar: {
-    height: 56,
     backgroundColor: '#1976d2',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1565c0',
+    paddingTop: 8,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  topBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   topBarLogo: {
     width: 80,
     height: 30,
     resizeMode: 'contain',
   },
-  headerContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    paddingTop: 40,
-    paddingBottom: 30,
+  headerInfo: {
+    alignItems: 'flex-end',
   },
-  titleSection: {
-    marginBottom: 20,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
-  titleContainer: {
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#ffffff',
+    opacity: 0.9,
+  },
+
+  // Welcome section
+  welcomeSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 20,
+    padding: 24,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-  },
-  addButton: {
-    backgroundColor: '#000',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  pageSubtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  requirementCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
+    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  welcomeContent: {
+    flex: 1,
+  },
+  welcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  addRequirementBtn: {
+    backgroundColor: '#1976d2',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#1976d2',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  addRequirementIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  addRequirementText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+
+  // Content styles
+  content: {
+    flex: 1,
+    paddingTop: 16,
+  },
+
+  // Loading styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+
+  // Empty state
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  emptyStateBtn: {
+    backgroundColor: '#1976d2',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  emptyStateBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  // Requirements list
+  requirementsList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  requirementCard: {
+    backgroundColor: '#ffffff',
+    marginBottom: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  cardTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  requirementIcon: {
+    fontSize: 20,
+    marginRight: 12,
   },
   requirementTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: 'bold',
+    color: '#1a237e',
     flex: 1,
   },
   cardActions: {
     flexDirection: 'row',
+    gap: 8,
   },
-  actionButton: {
+  editBtn: {
+    backgroundColor: '#1976d2',
+    borderRadius: 8,
     padding: 8,
-    marginLeft: 8,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionIcon: {
+  editBtnIcon: {
     fontSize: 16,
+  },
+  deleteBtn: {
+    backgroundColor: '#d32f2f',
+    borderRadius: 8,
+    padding: 8,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteBtnIcon: {
+    fontSize: 16,
+  },
+
+  // Card content
+  cardContent: {
+    padding: 20,
   },
   requirementDescription: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: '#333',
     lineHeight: 20,
+    marginBottom: 16,
   },
-  dueDateContainer: {
+  requirementMeta: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    flex: 1,
   },
-  dueDateIcon: {
+  metaIcon: {
     fontSize: 14,
     marginRight: 6,
   },
-  dueDateText: {
-    fontSize: 14,
+  metaText: {
+    fontSize: 12,
     color: '#666',
+    flex: 1,
+  },
+  documentsSection: {
+    marginBottom: 16,
   },
   requiredDocsLabel: {
     fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 12,
   },
   documentTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    gap: 8,
   },
   documentTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginRight: 8,
-    marginBottom: 4,
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   documentIcon: {
-    fontSize: 12,
-    marginRight: 4,
+    fontSize: 14,
+    marginRight: 6,
   },
   documentText: {
     fontSize: 12,
-    color: '#666',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  statusItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  statusIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  statusText: {
-    fontSize: 14,
     color: '#333',
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  documentTypeBadge: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  documentTypeText: {
+    fontSize: 10,
+    color: '#1976d2',
+    fontWeight: '600',
+  },
+  cardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
   },
   createdDate: {
     fontSize: 12,
     color: '#999',
   },
+
+  // Modal styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  confirmCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+    maxHeight: '90%',
+    flexDirection: 'column',
+  },
+  modalBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  modalBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalHeader: {
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+
+  // Input styles
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  modernInput: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    fontSize: 14,
+    color: '#333',
+  },
+  textAreaInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  webDateInput: {
+    width: '100%',
+    padding: 12,
+    borderRadius: 12,
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#f8f9fa',
+    fontSize: 14,
+    color: '#333',
+    boxSizing: 'border-box',
+  },
+  datePickerButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    flexWrap: 'wrap',
+  },
+  datePickerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  calendarIcon: {
+    fontSize: 18,
+  },
+
+  // Documents section
+  documentsSection: {
+    marginBottom: 20,
+  },
+  documentsHeader: {
+    marginBottom: 16,
+  },
+  documentsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 4,
+  },
+  documentsSubtitle: {
+    fontSize: 12,
+    color: '#666',
+  },
+  documentsList: {
+    gap: 16,
+  },
+  documentItem: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  documentItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  documentItemTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  removeDocBtn: {
+    backgroundColor: '#ffebee',
+    borderRadius: 8,
+    padding: 6,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeDocText: {
+    fontSize: 12,
+  },
+  documentInputRow: {
+    marginBottom: 12,
+  },
+  documentNameInput: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    fontSize: 14,
+    color: '#333',
+  },
+  documentTypeSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  documentTypeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+  },
+  webSelect: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 8,
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#ffffff',
+    fontSize: 14,
+    color: '#333',
+  },
+  typeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    flex: 1,
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#ffffff',
+  },
+  typeButtonActive: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#1976d2',
+  },
+  typeButtonIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  typeButtonText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  typeButtonTextActive: {
+    color: '#1976d2',
+    fontWeight: '600',
+  },
+  addDocumentBtn: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#90caf9',
+  },
+  addDocumentIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  addDocumentText: {
+    fontSize: 14,
+    color: '#1976d2',
+    fontWeight: '600',
+  },
+
+  // Modal actions
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    flexShrink: 0,
+  },
+  cancelBtn: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: '#1976d2',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    shadowColor: '#1976d2',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveBtnText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+
+  // Navigation styles
   navContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
@@ -626,111 +1123,6 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#1976d2',
     fontWeight: '500',
-  },
-  webInputWrapper: {
-    marginTop: 4,
-    marginBottom: 8,
-    marginRight: 20,
-
-  },
-  webLabel: {
-    color: '#666',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  datePickerButton: {
-    backgroundColor: '#f7f7f7',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginTop: 6,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  datePickerText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  calendarIcon: {
-    fontSize: 18,
-  },
-  // Modal styles
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  modalCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
-  },
-  input: {
-    backgroundColor: '#f7f7f7',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  docRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  removeDocBtn: {
-    marginLeft: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fce4e4',
-  },
-  removeDocText: {
-    color: '#c62828',
-    fontSize: 18,
-  },
-  secondaryBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#e3f2fd',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#90caf9',
-  },
-  secondaryBtnText: {
-    color: '#1976d2',
-    fontWeight: '500',
-  },
-  modalBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  modalBtnText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  confirmCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    width: '90%',
-    alignSelf: 'center',
   },
   footer: {
     flexDirection: 'row',

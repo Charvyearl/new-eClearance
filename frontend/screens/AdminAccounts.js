@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ActivityIndicator, SectionList, TouchableOpacity, TextInput, Button } from 'react-native';
+import { View, Text, ActivityIndicator, SectionList, TouchableOpacity, TextInput, Button, ScrollView, Image } from 'react-native';
 
 export default function AdminAccounts(props) {
   const { styles, users, loading, handleDelete, onUpdateUser } = props;
@@ -41,92 +41,182 @@ export default function AdminAccounts(props) {
   }, [users, activeTab]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.adminSection}>
-        <Text style={styles.sectionTitle}>Admin Panel - Accounts</Text>
+    <ScrollView style={styles.adminAccountsContainer} showsVerticalScrollIndicator={false}>
+      {/* Header Section */}
+      <View style={styles.adminAccountsCard}>
+        <View style={styles.adminAccountsHeader}>
+          <View style={styles.adminAccountsTitleContainer}>
+            <Text style={styles.adminAccountsTitle}>👥 Account Management</Text>
+            <Text style={styles.adminAccountsSubtitle}>Manage user accounts and permissions</Text>
+          </View>
+          <View style={styles.adminAccountsIcon}>
+            <Text style={styles.adminAccountsIconText}>⚙️</Text>
+          </View>
+        </View>
+
+        {/* Statistics Cards */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{(users || []).filter(u => u.role === 'admin').length}</Text>
+            <Text style={styles.statLabel}>👑 Admins</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{(users || []).filter(u => u.role === 'department').length}</Text>
+            <Text style={styles.statLabel}>🏢 Departments</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{(users || []).filter(u => u.role === 'student').length}</Text>
+            <Text style={styles.statLabel}>🎓 Students</Text>
+          </View>
+        </View>
+
+        {/* Role Tabs */}
+        <View style={styles.roleTabs}>
+          <TouchableOpacity
+            style={[styles.roleTab, activeTab === 'admins' && styles.roleTabActive]}
+            onPress={() => setActiveTab('admins')}
+          >
+            <Text style={[styles.roleTabText, activeTab === 'admins' && styles.roleTabTextActive]}>Admins</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.roleTab, activeTab === 'departments' && styles.roleTabActive]}
+            onPress={() => setActiveTab('departments')}
+          >
+            <Text style={[styles.roleTabText, activeTab === 'departments' && styles.roleTabTextActive]}>Departments</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.roleTab, activeTab === 'students' && styles.roleTabActive]}
+            onPress={() => setActiveTab('students')}
+          >
+            <Text style={[styles.roleTabText, activeTab === 'students' && styles.roleTabTextActive]}>Students</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Role Tabs */}
-      <View style={[styles.registrationToggle, { marginHorizontal: 16 }]}>
-        <TouchableOpacity
-          style={[styles.regToggleBtn, activeTab === 'admins' && styles.regToggleBtnActive]}
-          onPress={() => setActiveTab('admins')}
-        >
-          <Text style={[styles.regToggleText, activeTab === 'admins' && styles.regToggleTextActive]}>Admins</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.regToggleBtn, activeTab === 'departments' && styles.regToggleBtnActive]}
-          onPress={() => setActiveTab('departments')}
-        >
-          <Text style={[styles.regToggleText, activeTab === 'departments' && styles.regToggleTextActive]}>Departments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.regToggleBtn, activeTab === 'students' && styles.regToggleBtnActive]}
-          onPress={() => setActiveTab('students')}
-        >
-          <Text style={[styles.regToggleText, activeTab === 'students' && styles.regToggleTextActive]}>Students</Text>
-        </TouchableOpacity>
-      </View>
-
+      {/* Edit User Form */}
       {editingUser && (
-        <View style={[styles.formRow, { marginHorizontal: 12 }]}>
-          <Text style={[styles.sectionTitle, { marginBottom: 8 }]}>Edit Account</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            value={editName}
-            onChangeText={setEditName}
-            autoCapitalize="words"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={editEmail}
-            onChangeText={setEditEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button title={saving ? 'Saving...' : 'Save'} onPress={saveEdit} disabled={saving} />
-            <View style={{ width: 8 }} />
-            <Button title="Cancel" color="#888" onPress={() => setEditingUser(null)} disabled={saving} />
+        <View style={styles.editUserCard}>
+          <View style={styles.editUserHeader}>
+            <Text style={styles.editUserTitle}>✏️ Edit Account</Text>
+            <Text style={styles.editUserSubtitle}>Update user information</Text>
+          </View>
+          
+          <View style={styles.editUserForm}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputIcon}>👤</Text>
+                <TextInput
+                  style={styles.modernInput}
+                  placeholder="Enter full name"
+                  placeholderTextColor="#9e9e9e"
+                  value={editName}
+                  onChangeText={setEditName}
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputIcon}>📧</Text>
+                <TextInput
+                  style={styles.modernInput}
+                  placeholder="Enter email address"
+                  placeholderTextColor="#9e9e9e"
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
+            
+            <View style={styles.editUserActions}>
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+                onPress={saveEdit}
+                disabled={saving}
+              >
+                <Text style={styles.saveBtnText}>
+                  {saving ? 'Saving...' : '💾 Save Changes'}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setEditingUser(null)}
+                disabled={saving}
+              >
+                <Text style={styles.cancelBtnText}>❌ Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
 
+      {/* Users List */}
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 16 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1a237e" />
+          <Text style={styles.loadingText}>Loading accounts...</Text>
+        </View>
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingVertical: 8 }}
-          renderSectionHeader={({ section: { title, data } }) => (
-            data.length > 0 ? (
-              <Text style={[styles.sectionTitle, { marginTop: 12 }]}>{title}</Text>
-            ) : null
-          )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => (
-            <View style={styles.listItem}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
+        <View style={styles.usersListCard}>
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.usersListContent}
+            renderSectionHeader={({ section: { title, data } }) => (
+              data.length > 0 ? (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionHeaderTitle}>{title}</Text>
+                  <Text style={styles.sectionHeaderCount}>{data.length} {data.length === 1 ? 'account' : 'accounts'}</Text>
+                </View>
+              ) : null
+            )}
+            ItemSeparatorComponent={() => <View style={styles.userSeparator} />}
+            renderItem={({ item }) => (
+              <View style={styles.userCard}>
+                <View style={styles.userInfo}>
+                  <View style={styles.userAvatar}>
+                    <Text style={styles.userAvatarText}>
+                      {item.role === 'admin' ? '👑' : item.role === 'department' ? '🏢' : '🎓'}
+                    </Text>
+                  </View>
+                  <View style={styles.userDetails}>
+                    <Text style={styles.userName}>{item.name}</Text>
+                    <Text style={styles.userEmail}>{item.email}</Text>
+                    <View style={styles.userRoleBadge}>
+                      <Text style={styles.userRoleText}>
+                        {item.role === 'admin' ? 'Administrator' : 
+                         item.role === 'department' ? 'Department Staff' : 'Student'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.userActions}>
+                  <TouchableOpacity style={styles.editUserBtn} onPress={() => beginEdit(item)}>
+                    <Text style={styles.editUserBtnText}>✏️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.deleteUserBtn} onPress={() => handleDelete(item.id)}>
+                    <Text style={styles.deleteUserBtnText}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity style={styles.editBtn} onPress={() => beginEdit(item)}>
-                <Text style={styles.btnText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
-                <Text style={styles.btnText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          ListEmptyComponent={(
-            <Text style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>No users</Text>
-          )}
-        />
+            )}
+            ListEmptyComponent={(
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateIcon}>👥</Text>
+                <Text style={styles.emptyStateTitle}>No {activeTab} found</Text>
+                <Text style={styles.emptyStateSubtitle}>No {activeTab} accounts have been created yet</Text>
+              </View>
+            )}
+          />
+        </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 

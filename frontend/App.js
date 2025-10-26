@@ -62,11 +62,11 @@ export default function App() {
     
     // For web, use localhost
     if (typeof window !== 'undefined' && window.location) {
-      return 'http://localhost:3000';
+      return 'http://109.123.227.37:9080';
     }
     
     // For mobile devices (Expo Go), use local network IP
-    return 'http://10.16.20.83:3000';
+    return 'http://109.123.227.37:9080';
   }, []);
 
   // Load persisted session on first mount (web reload)
@@ -331,42 +331,93 @@ export default function App() {
 
   if (!user) {
     if (authMode === 'admin-login') {
-      // Show admin login form
+      // Show enhanced admin login form
     return (
-      <SafeAreaView style={styles.container}>
-          <Text style={styles.title}>eClearance - Admin Login</Text>
-        <View style={styles.authContainer}>
-            <TouchableOpacity 
-              style={[styles.toggleBtn, styles.toggleBtnActive]}
-              onPress={() => setAuthMode('login')}
-            >
-              <Text style={[styles.toggleText, styles.toggleTextActive]}>← Back to Student/Dept Login</Text>
-            </TouchableOpacity>
-          
-          <TextInput
-            style={styles.input}
-              placeholder="Admin Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          
-          <Button
-              title="Admin Login"
-              onPress={() => handleAuth(email, password, 'admin')}
-            disabled={submitting}
-          />
+      <SafeAreaView style={styles.adminContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a237e" translucent={false} />
+        
+        {/* Background Gradient Effect */}
+        <View style={styles.adminBackground}>
+          <View style={styles.adminGradient} />
         </View>
-        <StatusBar style="auto" />
+        
+        {/* Header with Logo */}
+        <View style={styles.adminHeader}>
+          <View style={styles.adminLogoContainer}>
+            <Image source={require('./assets/mysmclogo.webp')} style={styles.adminLogo} />
+          </View>
+          <Text style={styles.adminTitle}>Admin Portal</Text>
+          <Text style={styles.adminSubtitle}>eClearance Management System</Text>
+          <View style={styles.adminBadge}>
+            <Text style={styles.adminBadgeText}>🔐 SECURE ACCESS</Text>
+          </View>
+        </View>
+
+        {/* Admin Login Card */}
+        <View style={styles.adminCard}>
+          <View style={styles.adminCardHeader}>
+            <Text style={styles.adminCardTitle}>Administrator Access</Text>
+            <Text style={styles.adminCardSubtitle}>Sign in to manage the system</Text>
+          </View>
+
+          {/* Back Button */}
+          <TouchableOpacity 
+            style={styles.adminBackBtn}
+            onPress={() => setAuthMode('login')}
+          >
+            <Text style={styles.adminBackIcon}>←</Text>
+            <Text style={styles.adminBackText}>Back to Student/Department Login</Text>
+          </TouchableOpacity>
+
+          {/* Login Form */}
+          <View style={styles.adminForm}>
+            <View style={styles.adminInputGroup}>
+              <Text style={styles.adminInputLabel}>Admin Email</Text>
+              <View style={styles.adminInputContainer}>
+                <Text style={styles.adminInputIcon}>📧</Text>
+                <TextInput
+                  style={styles.adminInput}
+                  placeholder="Enter admin email"
+                  placeholderTextColor="#9e9e9e"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
+            
+            <View style={styles.adminInputGroup}>
+              <Text style={styles.adminInputLabel}>Password</Text>
+              <View style={styles.adminInputContainer}>
+                <Text style={styles.adminInputIcon}>🔒</Text>
+                <TextInput
+                  style={styles.adminInput}
+                  placeholder="Enter password"
+                  placeholderTextColor="#9e9e9e"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+            
+            <TouchableOpacity
+              style={[styles.adminLoginBtn, submitting && styles.adminLoginBtnDisabled]}
+              onPress={() => handleAuth(email, password, 'admin')}
+              disabled={submitting}
+            >
+              <Text style={styles.adminLoginBtnText}>
+                {submitting ? 'Signing In...' : '🚀 Sign In as Admin'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.adminFooter}>
+          <Text style={styles.adminFooterText}>© 2025 Developed by Cortez Charvy</Text>
+        </View>
       </SafeAreaView>
       );
     }
